@@ -16,7 +16,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class UserControllerTest {
+class UserControllerTest {
     private User user;
     private UserController userController;
     private Validator validator;
@@ -40,7 +40,7 @@ public class UserControllerTest {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
 
         assertTrue(violations.isEmpty());
-        assertEquals(userController.getAllUsers().size(), 1);
+        assertEquals(1, userController.getAllUsers().size());
         assertEquals(user.getEmail(), returnedUser.getEmail());
         assertEquals(user.getLogin(), returnedUser.getLogin());
         assertEquals(user.getName(), returnedUser.getName());

@@ -9,8 +9,9 @@ import javax.validation.Valid;
 
 @Slf4j
 public class UserValidate {
+    private UserValidate() { throw new IllegalStateException("Utility class"); }
     public static void validate(@Valid @RequestBody User user) {
-        //Проверяем только логин на наличие пробелов, все остальное покрыто аннотациями модели User
+        //Проверяем только логин на наличие пробелов и Имя на null/Empty, все остальное покрыто аннотациями модели User
         if (user.getLogin().contains(" ")){
             log.warn("User login has space character, login: {}", user.getLogin());
             throw new ValidationException("Логин содержит пробел");
