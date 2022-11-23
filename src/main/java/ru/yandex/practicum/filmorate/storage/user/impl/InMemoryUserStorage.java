@@ -53,4 +53,15 @@ public class InMemoryUserStorage implements UserStorage {
         } else
             throw new NotExistException("User with login: " + user.getLogin() + " does not exist");
     }
+
+    @Override
+    public User deleteUserById(int userId) {
+        if (users.containsKey(userId)) {
+            User user = users.get(userId);
+            users.remove(userId);
+            log.info("User with id: {} deleted", userId);
+            return user;
+        } else
+            throw new NotExistException("User with id: " + userId + " does not exist");
+    }
 }

@@ -134,7 +134,7 @@ class UserControllerTest {
         userService.updateUser(user);
         User returnedUser = userService.getUsers().iterator().next();
 
-        assertEquals(userService.getUsers().size(), 1);
+        assertEquals(1, userService.getUsers().size());
         assertEquals(user.getEmail(), returnedUser.getEmail());
         assertEquals(user.getLogin(), returnedUser.getLogin());
         assertEquals(user.getName(), returnedUser.getName());

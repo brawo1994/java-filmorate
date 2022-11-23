@@ -37,6 +37,11 @@ public class UserService {
         return userStorage.updateUser(user);
     }
 
+    public User deleteUserById(int userId) {
+        checkUserExist(List.of(userId));
+        return userStorage.deleteUserById(userId);
+    }
+
     public User addFriend(int userId, int friendId) {
         if (userId == friendId)
             throw new ValidationException("User cannot be friends with himself");

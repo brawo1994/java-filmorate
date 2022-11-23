@@ -53,4 +53,15 @@ public class InMemoryFilmStorage implements FilmStorage {
         } else
             throw new NotExistException("Film with name: " + film.getName() + " does not exist");
     }
+
+    @Override
+    public Film deleteFilmById(int filmId) {
+        if (films.containsKey(filmId)) {
+            Film film = films.get(filmId);
+            films.remove(filmId);
+            log.info("Film with id: {} deleted", filmId);
+            return film;
+        } else
+            throw new NotExistException("Film with id: " + filmId + " does not exist");
+    }
 }

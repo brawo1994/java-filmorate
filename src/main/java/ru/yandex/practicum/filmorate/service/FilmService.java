@@ -36,6 +36,11 @@ public class FilmService {
         return filmStorage.updateFilm(film);
     }
 
+    public Film deleteFilmById(int filmId) {
+        checkFilmExist(filmId);
+        return filmStorage.deleteFilmById(filmId);
+    }
+
     public Film addLike(int filmId, int userId){
         checkFilmExist(filmId);
         filmStorage.getFilmById(filmId).getUsersLikes().add(userId);
