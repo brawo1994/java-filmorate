@@ -6,14 +6,14 @@ user_id PK int4
 email varchar
 login varchar
 name varchar
-birthday timepstamp
+birthday timestamp
 
 film
 -
 film_id PK int4
 name varchar
 description varchar
-release_date timepstamp
+release_date timestamp
 duration int8
 ganre varchar
 rating_mpa varchar

@@ -22,8 +22,9 @@ SELECT
     f.name,
     count(f.name)
 FROM film as f
-LEFT JOIN film_like as fl on f.film_id = fl.film_id
+    LEFT JOIN film_like as fl on f.film_id = fl.film_id
 GROUP BY f.film_id
+ORDER BY count(f.name) DESC
 LIMIT N
 ```
 
