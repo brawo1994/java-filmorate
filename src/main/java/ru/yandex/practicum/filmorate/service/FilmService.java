@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exeption.NotExistException;
+import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.util.FilmValidate;
@@ -43,18 +44,16 @@ public class FilmService {
 
     public Film addLike(int filmId, int userId){
         checkFilmExist(filmId);
-        filmStorage.getFilmById(filmId).getUsersLikes().add(userId);
-        log.info("Пользователь с id: {} поставил лайк фильму с id: {}", userId, filmId);
-        return filmStorage.getFilmById(filmId);
+        if (filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
+            throw new ValidationException("Like from user with id: " + userId + " already exist in film with id: " + filmId);
+        return filmStorage.addLike(filmId, userId);
     }
 
     public Film deleteLike(int filmId, int userId){
         checkFilmExist(filmId);
         if (!filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
             throw new NotExistException("Like from user with id: " + userId + " not found in film with id: " + filmId);
-        filmStorage.getFilmById(filmId).getUsersLikes().remove(userId);
-        log.info("Пользователь с id: {} удалил лайк у фильма с id: {}", userId, filmId);
-        return filmStorage.getFilmById(filmId);
+        return filmStorage.removeLike(filmId, userId);
     }
 
     public List<Film> getPopularFilms(int count){
@@ -65,7 +64,6 @@ public class FilmService {
     }
 
     private void checkFilmExist(int filmId){
-        if (!filmStorage.getFilmsMap().containsKey(filmId))
-            throw new NotExistException("Film with id: " + filmId + " does not exist");
+        filmStorage.getFilmById(filmId); // Если фильм отсутствует в БД, вылетит исключение
     }
 }
