@@ -25,7 +25,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
-    private final Map<Integer, Film> films = new HashMap<>();
 
     @Override
     public Collection<Film> getFilms() {
@@ -50,7 +49,6 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film createFilm(Film film) {
         KeyHolder generatedId = new GeneratedKeyHolder();
-
         jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO films (name, description, release_date, duration, rating_mpa) VALUES(?,?,?,?,?)",

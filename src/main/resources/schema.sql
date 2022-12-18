@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     email           VARCHAR(255)    NOT NULL,
     login           VARCHAR(255)    NOT NULL,
     name            VARCHAR(255)    NOT NULL,
-    birthday        DATE NOT NULL
+    birthday        DATE            NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS mpa
