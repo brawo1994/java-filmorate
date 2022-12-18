@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -38,7 +37,6 @@ public class UserService {
     }
 
     public User deleteUserById(int userId) {
-        checkUserExist(List.of(userId));
         return userStorage.deleteUserById(userId);
     }
 
@@ -46,8 +44,9 @@ public class UserService {
         if (userId == friendId)
             throw new ValidationException("User cannot be friends with himself");
         checkUserExist(List.of(userId,friendId));
-        userStorage.getUserById(userId).getFriends().add(friendId);
-        userStorage.getUserById(friendId).getFriends().add(userId);
+        if (userStorage.getUserById(userId).getFriends().contains(friendId) && userStorage.getUserById(friendId).getFriends().contains(userId))
+            throw new ValidationException("Users with id {} and {} already friends");
+        userStorage.addFriendship(userId, friendId);
         log.info("Пользователи с id: {} и {} стали друзьями", userId, friendId);
         return userStorage.getUserById(userId);
     }
@@ -58,8 +57,7 @@ public class UserService {
         checkUserExist(List.of(userId,friendId));
         if (!userStorage.getUserById(userId).getFriends().contains(friendId) && !userStorage.getUserById(friendId).getFriends().contains(userId))
             throw new ValidationException("Users with id {} and {} are not friends");
-        userStorage.getUserById(userId).getFriends().remove(friendId);
-        userStorage.getUserById(friendId).getFriends().remove(userId);
+        userStorage.removeFriendship(userId, friendId);
         log.info("Пользователи с id: {} и {} больше не друзья", userId, friendId);
         return userStorage.getUserById(userId);
     }
@@ -83,8 +81,7 @@ public class UserService {
 
     private void checkUserExist(List<Integer> userIdList){
         for (Integer userId : userIdList){
-            if (!userStorage.getUsersMap().containsKey(userId))
-                throw new NotExistException("User with id: " + userId + " does not exist");
+            userStorage.getUserById(userId); // Если пользователя не существует, вылетит исключение
         }
     }
 }
