@@ -41,22 +41,20 @@ public class UserService {
     }
 
     public User addFriend(int userId, int friendId) {
-        if (userId == friendId)
-            throw new ValidationException("User cannot be friends with himself");
+        checkUsersDifferent(userId, friendId);
         checkUserExist(List.of(userId,friendId));
-        if (userStorage.getUserById(userId).getFriends().contains(friendId) && userStorage.getUserById(friendId).getFriends().contains(userId))
-            throw new ValidationException("Users with id {} and {} already friends");
+        if (userStorage.getUserById(userId).getFriends().contains(friendId))
+            throw new ValidationException("Users with id " + userId + " and " + friendId + " already friends");
         userStorage.addFriendship(userId, friendId);
         log.info("Пользователи с id: {} и {} стали друзьями", userId, friendId);
         return userStorage.getUserById(userId);
     }
 
     public User deleteFriend(int userId, int friendId) {
-        if (userId == friendId)
-            throw new ValidationException("User cannot be friends with himself");
+        checkUsersDifferent(userId, friendId);
         checkUserExist(List.of(userId,friendId));
-        if (!userStorage.getUserById(userId).getFriends().contains(friendId) && !userStorage.getUserById(friendId).getFriends().contains(userId))
-            throw new ValidationException("Users with id {} and {} are not friends");
+        if (!userStorage.getUserById(userId).getFriends().contains(friendId))
+            throw new ValidationException("Users with id " + userId + " and " + friendId + " are not friends");
         userStorage.removeFriendship(userId, friendId);
         log.info("Пользователи с id: {} и {} больше не друзья", userId, friendId);
         return userStorage.getUserById(userId);
@@ -71,8 +69,7 @@ public class UserService {
 
     public List<User> getCommonFriends(int firstUserId, int secondUserId) {
         checkUserExist(List.of(firstUserId,secondUserId));
-        if (firstUserId == secondUserId)
-            throw new ValidationException("User cannot be friends with himself");
+        checkUsersDifferent(firstUserId, secondUserId);
         return userStorage.getUserById(firstUserId).getFriends().stream()
                 .filter(friendId -> userStorage.getUserById(secondUserId).getFriends().contains(friendId))
                 .map(userStorage::getUserById)
@@ -83,5 +80,10 @@ public class UserService {
         for (Integer userId : userIdList){
             userStorage.getUserById(userId); // Если пользователя не существует, вылетит исключение
         }
+    }
+
+    private void checkUsersDifferent(int firstUserId, int secondUserId){
+        if (firstUserId == secondUserId)
+            throw new ValidationException("User cannot be friends with themselves");
     }
 }

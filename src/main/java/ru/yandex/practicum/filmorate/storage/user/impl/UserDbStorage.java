@@ -89,11 +89,15 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void addFriendship(int userId, int friendId) {
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet("SELECT * FROM friends WHERE user_id = ? AND friend_id = ?", friendId, userId);
+        SqlRowSet userRows = jdbcTemplate.queryForRowSet(
+                "SELECT * FROM friends WHERE user_id = ? AND friend_id = ?",
+                friendId,
+                userId);
+        String sqlRequestAddFriend = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)";
         if (userRows.first()) {
             // Запрос в друзья уже существует, поэтому добавляем подтвержденную дружбу, и обновляем статус у существующего запроса
             jdbcTemplate.update(
-                    "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)",
+                    sqlRequestAddFriend,
                     userId,
                     friendId,
                     FriendshipStatus.CONFIRMED.toString());
@@ -105,7 +109,7 @@ public class UserDbStorage implements UserStorage {
         } else {
             // Запрос в друзья не существует, поэтому добавляем не подтвержденную дружбу (запрос на дружбу)
             jdbcTemplate.update(
-                    "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)",
+                    sqlRequestAddFriend,
                     userId,
                     friendId,
                     FriendshipStatus.REQUEST.toString());
@@ -114,17 +118,37 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public void removeFriendship(int userId, int friendId) {
-        jdbcTemplate.update(
-                "DELETE FROM friends WHERE user_id = ? AND friend_id = ?",
+        SqlRowSet userRows = jdbcTemplate.queryForRowSet(
+                "SELECT * FROM friends WHERE user_id = ? AND friend_id = ? AND status = ?",
+                friendId,
                 userId,
-                friendId);
+                FriendshipStatus.CONFIRMED);
+        String sqlRequestDeleteFriend = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+        if (userRows.first()) {
+            // Дружба подтвержденная, значит нужно не только удалить одностороннюю дружбу, но и изменить статус
+            jdbcTemplate.update(
+                    sqlRequestDeleteFriend,
+                    userId,
+                    friendId);
+            jdbcTemplate.update(
+                    "UPDATE friends SET status = ? WHERE user_id = ? AND friend_id = ?",
+                    FriendshipStatus.REQUEST.toString(),
+                    userId,
+                    friendId);
+        } else {
+            // Дружба не подтвержденная, значит нужно только удалить запрос
+            jdbcTemplate.update(
+                    sqlRequestDeleteFriend,
+                    userId,
+                    friendId);
+        }
     }
 
-    private List<User> getFriendsById(int id) {
-        return jdbcTemplate.query(
-                "SELECT * FROM users WHERE id IN (SELECT friend_id FROM friends WHERE user_id  = ?)",
-                this::makeUser,
-                id);
+    private List<Integer> getFriendsIdByUserId(int userId) {
+        return jdbcTemplate.queryForList(
+                "SELECT friend_id FROM friends WHERE user_id  = ?",
+                Integer.class,
+                userId);
     }
 
     private User makeUser(ResultSet resultSet, int rowNum) throws SQLException {
@@ -133,10 +157,7 @@ public class UserDbStorage implements UserStorage {
         String login = resultSet.getString("login");
         String name = resultSet.getString("name");
         LocalDate birthday = resultSet.getDate("birthday").toLocalDate();
-        Set<Integer> friends = new HashSet<>();
-        for (User user : getFriendsById(id)){
-            friends.add(user.getId());
-        }
+        Set<Integer> friends = new HashSet<>(getFriendsIdByUserId(id));
         return new User(id, email, login, name, birthday, friends);
     }
 }
