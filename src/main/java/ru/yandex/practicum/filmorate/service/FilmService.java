@@ -66,4 +66,11 @@ public class FilmService {
     private void checkFilmExist(int filmId){
         filmStorage.getFilmById(filmId); // Если фильм отсутствует в БД, вылетит исключение
     }
+
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        return filmStorage.getFilms().stream()
+                .sorted((o1, o2) -> Integer.compare(o2.getUsersLikes().size(), o1.getUsersLikes().size()))
+                .filter(film -> film.getUsersLikes().contains(userId) && film.getUsersLikes().contains(friendId))
+                .collect(Collectors.toList());
+    }
 }
