@@ -68,9 +68,6 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(int userId, int friendId) {
-        return filmStorage.getFilms().stream()
-                .sorted((o1, o2) -> Integer.compare(o2.getUsersLikes().size(), o1.getUsersLikes().size()))
-                .filter(film -> film.getUsersLikes().contains(userId) && film.getUsersLikes().contains(friendId))
-                .collect(Collectors.toList());
+        return filmStorage.getCommonFilms(userId,friendId);
     }
 }
