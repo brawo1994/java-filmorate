@@ -37,16 +37,16 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
-        String sqlQuery = "SELECT * " +
-                          "FROM films " +
-                          "WHERE id IN " +
-                              "(SELECT fl1.film_id " +
-                               "FROM films_like AS fl1 " +
-                               "JOIN films_like AS fl2 ON fl1.film_id = fl2.film_id " +
-                               "WHERE fl1.user_id = ? " +
-                                 "AND fl2.user_id = ? " +
-                               "GROUP BY fl1.FILM_ID " +
-                               "ORDER BY COUNT(fl1.USER_ID) DESC)";
+        String sqlQuery = "SELECT DISTINCT f.id, " +
+                                          "f.name, " +
+                                          "f.description, " +
+                                          "f.release_date, " +
+                                          "f.duration, " +
+                                          "f.rating_mpa " +
+                          "FROM films f " +
+                          "INNER JOIN films_like fl ON f.id = fl.film_id " +
+                          "INNER JOIN films_like f2 ON f2.film_id = fl.film_id " +
+                          "WHERE fl.user_id = ? AND f2.user_id = ?";
 
         return jdbcTemplate.query(sqlQuery, this::makeFilm, userId, friendId);
     }
