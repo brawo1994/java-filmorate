@@ -40,7 +40,7 @@ public class FilmDbStorage implements FilmStorage {
                 "  WHERE FL.USER_ID = ? " +
                 "    ) " +
                 "  AND F.ID NOT IN (" +
-                "      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?)", this::makeFilm,id, id);
+                "      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?)", this::makeFilm, id, id);
     }
 
     @Override
@@ -53,15 +53,15 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
         String sqlQuery = "SELECT DISTINCT f.id, " +
-                                          "f.name, " +
-                                          "f.description, " +
-                                          "f.release_date, " +
-                                          "f.duration, " +
-                                          "f.rating_mpa " +
-                          "FROM films f " +
-                          "INNER JOIN films_like fl ON f.id = fl.film_id " +
-                          "INNER JOIN films_like f2 ON f2.film_id = fl.film_id " +
-                          "WHERE fl.user_id = ? AND f2.user_id = ?";
+                "f.name, " +
+                "f.description, " +
+                "f.release_date, " +
+                "f.duration, " +
+                "f.rating_mpa " +
+                "FROM films f " +
+                "INNER JOIN films_like fl ON f.id = fl.film_id " +
+                "INNER JOIN films_like f2 ON f2.film_id = fl.film_id " +
+                "WHERE fl.user_id = ? AND f2.user_id = ?";
 
         return jdbcTemplate.query(sqlQuery, this::makeFilm, userId, friendId);
     }
