@@ -30,6 +30,20 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
+    public List<Film> getRecommendations(int id){
+        return jdbcTemplate.query("SELECT DISTINCT F.ID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA FROM FILMS F " +
+                "JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID " +
+                "WHERE FL.USER_ID IN ( " +
+                "    SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS FROM FILMS_LIKE F " +
+                " JOIN FILMS_LIKE FL on F.FILM_ID = FL.FILM_ID " +
+                " JOIN FILMS_LIKE F2 on F2.FILM_ID = FL.FILM_ID " +
+                "  WHERE FL.USER_ID = ? " +
+                "    ) " +
+                "  AND F.ID NOT IN (" +
+                "      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?)", this::makeFilm,id, id);
+    }
+
+    @Override
     public Collection<Film> getFilms() {
         return jdbcTemplate.query(
                 "SELECT * FROM films",
