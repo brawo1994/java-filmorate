@@ -22,4 +22,10 @@ public interface FilmStorage {
     Film addLike(int filmId, int userId);
 
     Film removeLike(int filmId, int userId);
+
+    List<Film> getFilmsByDirectorIdSortedByLike(int directorId);
+
+    List<Film> getFilmsByDirectorIdSortedByReleaseDate(int directorId);
+
+    boolean checkFilmExist(int filmId);
 }

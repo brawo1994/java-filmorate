@@ -14,7 +14,7 @@ public class FilmValidate {
     private FilmValidate() { throw new IllegalStateException("Utility class"); }
     public static void validate(@Valid @RequestBody Film film) {
         //Проверяем только дату релиза, все остальное покрыто аннотациями модели Film
-        if (film.getReleaseDate().isBefore(MIN_FILM_RELEASE_DATE)){
+        if (film.getReleaseDate().isBefore(MIN_FILM_RELEASE_DATE)) {
             log.warn("Film release date is before: {}, release is: {}", MIN_FILM_RELEASE_DATE,film.getReleaseDate());
             throw new ValidationException("Дата релиза фильма раньше чем " + MIN_FILM_RELEASE_DATE);
         }

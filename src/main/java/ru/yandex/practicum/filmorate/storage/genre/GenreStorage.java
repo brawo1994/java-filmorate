@@ -9,4 +9,6 @@ public interface GenreStorage {
     Collection<Genre> getAll();
 
     Genre getById(int id);
+
+    boolean checkGenreExist(int id);
 }

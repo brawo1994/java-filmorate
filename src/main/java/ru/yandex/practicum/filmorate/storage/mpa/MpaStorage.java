@@ -9,4 +9,6 @@ public interface MpaStorage {
     Collection<Mpa> getAll();
 
     Mpa getById(int id);
+
+    boolean checkMpaExist(int id);
 }

@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
@@ -29,14 +28,18 @@ public class MpaDbStorage implements MpaStorage {
 
     @Override
     public Mpa getById(int id) {
-        String sqlQuery = "SELECT * FROM mpa WHERE id = ?";
-        SqlRowSet mpaRows = jdbcTemplate.queryForRowSet(sqlQuery, id);
+        return jdbcTemplate.queryForObject(
+                "SELECT * FROM mpa WHERE id = ?",
+                this::makeMpa,
+                id);
+    }
 
-        if (!mpaRows.next()) {
-            throw new NotExistException("MPA with id: " + id + " does not exist");
-        }
-
-        return jdbcTemplate.queryForObject(sqlQuery, this::makeMpa, id);
+    @Override
+    public boolean checkMpaExist(int id) {
+        SqlRowSet mpaRows = jdbcTemplate.queryForRowSet(
+                "SELECT * FROM mpa WHERE id = ?",
+                id);
+        return mpaRows.next();
     }
 
     private Mpa makeMpa(ResultSet resultSet, int rowNum) throws SQLException {

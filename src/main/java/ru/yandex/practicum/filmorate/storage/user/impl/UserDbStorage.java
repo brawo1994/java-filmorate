@@ -8,8 +8,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exeption.NotExistException;
-import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.sql.Date;
@@ -34,10 +34,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User getUserById(int userId) {
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet(
-                "SELECT * FROM users WHERE id = ?",
-                userId);
-        if (!userRows.next())
+        if (!checkUserExist(userId))
             throw new NotExistException("User with id: " + userId + " does not exist");
         return jdbcTemplate.queryForObject(
                 "SELECT * FROM users WHERE id = ?",
@@ -65,7 +62,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        getUserById(user.getId());
         jdbcTemplate.update(
                 "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ? ",
                 user.getEmail(),
@@ -142,6 +138,14 @@ public class UserDbStorage implements UserStorage {
                     userId,
                     friendId);
         }
+    }
+
+    @Override
+    public boolean checkUserExist(int userId) {
+        SqlRowSet userRows = jdbcTemplate.queryForRowSet(
+                "SELECT * FROM users WHERE id = ?",
+                userId);
+        return userRows.next();
     }
 
     private List<Integer> getFriendsIdByUserId(int userId) {
