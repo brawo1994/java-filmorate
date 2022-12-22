@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -23,6 +24,7 @@ public class UserService {
     }
 
     public User getUserById(Integer userId) {
+        checkUserExist(List.of(userId));
         return userStorage.getUserById(userId);
     }
 
@@ -33,10 +35,12 @@ public class UserService {
 
     public User updateUser(User user) {
         UserValidate.validate(user);
+        checkUserExist(List.of(user.getId()));
         return userStorage.updateUser(user);
     }
 
     public User deleteUserById(int userId) {
+        checkUserExist(List.of(userId));
         return userStorage.deleteUserById(userId);
     }
 
@@ -46,7 +50,7 @@ public class UserService {
         if (userStorage.getUserById(userId).getFriends().contains(friendId))
             throw new ValidationException("Users with id " + userId + " and " + friendId + " already friends");
         userStorage.addFriendship(userId, friendId);
-        log.info("Пользователи с id: {} и {} стали друзьями", userId, friendId);
+        log.info("Users with id: {} and {} have become friends", userId, friendId);
         return userStorage.getUserById(userId);
     }
 
@@ -56,7 +60,7 @@ public class UserService {
         if (!userStorage.getUserById(userId).getFriends().contains(friendId))
             throw new ValidationException("Users with id " + userId + " and " + friendId + " are not friends");
         userStorage.removeFriendship(userId, friendId);
-        log.info("Пользователи с id: {} и {} больше не друзья", userId, friendId);
+        log.info("Users with id: {} and {} not friends anymore", userId, friendId);
         return userStorage.getUserById(userId);
     }
 
@@ -76,13 +80,14 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    private void checkUserExist(List<Integer> userIdList){
-        for (Integer userId : userIdList){
-            userStorage.getUserById(userId); // Если пользователя не существует, вылетит исключение
+    public void checkUserExist(List<Integer> userIdList) {
+        for (Integer userId : userIdList) {
+            if (!userStorage.checkUserExist(userId))
+                throw new NotExistException("User with id: " + userId + " does not exist");
         }
     }
 
-    private void checkUsersDifferent(int firstUserId, int secondUserId){
+    private void checkUsersDifferent(int firstUserId, int secondUserId) {
         if (firstUserId == secondUserId)
             throw new ValidationException("User cannot be friends with themselves");
     }

@@ -29,4 +29,5 @@ public class Film {
     private List<Integer> usersLikes;
     private Mpa mpa;
     private List<Genre> genres;
+    private List<Director> directors;
 }

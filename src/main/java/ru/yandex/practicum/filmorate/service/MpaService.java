@@ -1,14 +1,13 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
 import java.util.Collection;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MpaService {
@@ -19,6 +18,12 @@ public class MpaService {
     }
 
     public Mpa getById(int id) {
+        checkMpaExist(id);
         return mpaStorage.getById(id);
+    }
+
+    public void checkMpaExist(int id) {
+        if (!mpaStorage.checkMpaExist(id))
+            throw new NotExistException("MPA with id: " + id + " does not exist");
     }
 }

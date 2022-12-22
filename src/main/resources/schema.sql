@@ -34,6 +34,19 @@ CREATE TABLE IF NOT EXISTS films_genre
     PRIMARY KEY (film_id, genre_id)
 );
 
+CREATE TABLE IF NOT EXISTS director
+(
+    id              INTEGER         PRIMARY KEY AUTO_INCREMENT,
+    name            VARCHAR(255)    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS films_director
+(
+    film_id         INTEGER         REFERENCES films (id) ON DELETE CASCADE,
+    director_id     INTEGER         REFERENCES director (id) ON DELETE CASCADE,
+    PRIMARY KEY (film_id, director_id)
+);
+
 CREATE TABLE IF NOT EXISTS friends (
     user_id         INTEGER         REFERENCES users (id) ON DELETE CASCADE,
     friend_id       INTEGER         REFERENCES users (id) ON DELETE CASCADE,

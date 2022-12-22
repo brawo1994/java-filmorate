@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
@@ -41,22 +42,34 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Film addLike(@PathVariable int id, @PathVariable int userId) {
+    public Film addLike(
+            @PathVariable int id,
+            @PathVariable int userId) {
         return filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Film deleteLike(@PathVariable int id, @PathVariable int userId) {
+    public Film deleteLike(
+            @PathVariable int id,
+            @PathVariable int userId) {
         return filmService.deleteLike(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10", required = false) Integer count) {
+    public List<Film> getPopularFilms(
+            @RequestParam(defaultValue = "10", required = false) Integer count) {
         return filmService.getPopularFilms(count);
     }
 
     @GetMapping("/common")
     public List<Film> getCommonFilms(@RequestParam int userId, @RequestParam int friendId) {
         return filmService.getCommonFilms(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirector(
+            @PathVariable int directorId,
+            @RequestParam(defaultValue = "year", required = false) FilmsByDirectorOrderBy sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
     }
 }
