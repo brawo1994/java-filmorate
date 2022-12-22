@@ -18,7 +18,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -31,6 +33,22 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.query(
                 "SELECT * FROM films",
                 this::makeFilm);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        String sqlQuery = "SELECT DISTINCT f.id, " +
+                                          "f.name, " +
+                                          "f.description, " +
+                                          "f.release_date, " +
+                                          "f.duration, " +
+                                          "f.rating_mpa " +
+                          "FROM films f " +
+                          "INNER JOIN films_like fl ON f.id = fl.film_id " +
+                          "INNER JOIN films_like f2 ON f2.film_id = fl.film_id " +
+                          "WHERE fl.user_id = ? AND f2.user_id = ?";
+
+        return jdbcTemplate.query(sqlQuery, this::makeFilm, userId, friendId);
     }
 
     @Override
@@ -62,7 +80,7 @@ public class FilmDbStorage implements FilmStorage {
         }, generatedId);
         film.setId(Objects.requireNonNull(generatedId.getKey()).intValue());
 
-        if (film.getGenres() != null){
+        if (film.getGenres() != null) {
             addGenresToFilm(film);
         }
         film.setMpa(getMpaById(film.getMpa().getId()));
@@ -123,14 +141,14 @@ public class FilmDbStorage implements FilmStorage {
         return getFilmById(filmId);
     }
 
-    private void addGenresToFilm(Film film){
+    private void addGenresToFilm(Film film) {
         for (Genre genre : film.getGenres()) {
             SqlRowSet genreRows = jdbcTemplate.queryForRowSet(
                     "SELECT * FROM films_genre WHERE film_id = ? AND genre_id = ?",
                     film.getId(),
                     genre.getId());
             // Проверка, что такой жанр еще не добавлен
-            if (!genreRows.next()){
+            if (!genreRows.next()) {
                 jdbcTemplate.update(
                         "INSERT INTO films_genre (film_id, genre_id) VALUES (?,?)",
                         film.getId(),

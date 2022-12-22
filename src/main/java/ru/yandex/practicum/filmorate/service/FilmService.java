@@ -66,4 +66,8 @@ public class FilmService {
     private void checkFilmExist(int filmId){
         filmStorage.getFilmById(filmId); // Если фильм отсутствует в БД, вылетит исключение
     }
+
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        return filmStorage.getCommonFilms(userId,friendId);
+    }
 }
