@@ -30,7 +30,7 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public List<Film> getRecommendations(int id){
+    public List<Film> getRecommendations(int id) {
         return jdbcTemplate.query("SELECT DISTINCT F.ID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA FROM FILMS F " +
                 "JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID " +
                 "WHERE FL.USER_ID IN ( " +
