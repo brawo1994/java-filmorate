@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface FilmStorage {
 
+    List<Film> getRecommendations(int id);
+
     Collection<Film> getFilms();
 
     List<Film> getCommonFilms(int userId, int friendId);
