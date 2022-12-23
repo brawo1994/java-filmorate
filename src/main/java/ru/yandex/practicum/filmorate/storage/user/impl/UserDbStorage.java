@@ -140,21 +140,13 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    @Override
-    public boolean isUserNotExist(Integer userId) {
-        final String SQL_QUERY = "SELECT ID\n" +
-                "FROM USERS\n" +
-                "WHERE USERS.ID = ?";
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet(SQL_QUERY, userId);
-
-        return !userRows.next();
-    }
-
     private List<User> getFriendsById(int id) {
         return jdbcTemplate.query(
                 "SELECT * FROM users WHERE id IN (SELECT friend_id FROM friends WHERE user_id  = ?)",
                 this::makeUser,
                 id);
+    }
+
     @Override
     public boolean checkUserExist(int userId) {
         SqlRowSet userRows = jdbcTemplate.queryForRowSet(

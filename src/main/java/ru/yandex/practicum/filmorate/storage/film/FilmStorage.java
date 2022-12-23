@@ -25,9 +25,6 @@ public interface FilmStorage {
 
     Film removeLike(int filmId, int userId);
 
-    boolean isFilmNotExist(Integer filmId);
-
-
     List<Film> getFilmsByDirectorIdSortedByLike(int directorId);
 
     List<Film> getFilmsByDirectorIdSortedByReleaseDate(int directorId);

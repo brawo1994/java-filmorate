@@ -20,7 +20,5 @@ public interface UserStorage {
 
     void removeFriendship(int userId, int friendId);
 
-    boolean isUserNotExist(Integer userId);
-
     boolean checkUserExist(int userId);
 }
