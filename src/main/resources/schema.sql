@@ -59,3 +59,18 @@ CREATE TABLE IF NOT EXISTS films_like (
     user_id         INTEGER         REFERENCES users (id) ON DELETE CASCADE,
     PRIMARY KEY (film_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS films_review (
+    review_Id       INTEGER         PRIMARY KEY AUTO_INCREMENT,
+    film_Id         INTEGER         NOT NULL    REFERENCES films (id) ON DELETE CASCADE,
+    user_Id         INTEGER         NOT NULL    REFERENCES users (id) ON DELETE CASCADE,
+    content         VARCHAR(255)    NOT NULL,
+    is_Positive     BOOLEAN
+);
+
+CREATE TABLE IF NOT EXISTS reviews_like (
+    review_id       INTEGER         NOT NULL    REFERENCES films_review (review_Id) ON DELETE CASCADE,
+    user_id         INTEGER         NOT NULL    REFERENCES users (id)               ON DELETE CASCADE,
+    grade           INTEGER         NOT NULL,
+    PRIMARY KEY (review_id, user_id)
+);
