@@ -49,11 +49,11 @@ public class ReviewService {
         log.info("Start creating a review: {}", review);
 
         int filmId = review.getFilmId();
-        if (filmStorage.isFilmNotExist(filmId)) {
+        if (!filmStorage.checkFilmExist(filmId)) {
             throw new NotExistException("Film with id: " + filmId + " does not exist");
         }
         int userId = review.getUserId();
-        if (userStorage.isUserNotExist(userId)) {
+        if (!userStorage.checkUserExist(userId)) {
             throw new NotExistException("User with id: " + userId + " does not exist");
         }
 
@@ -82,7 +82,7 @@ public class ReviewService {
         log.info("Start adding like from user with id: {} to review with id: {}", userId, reviewId);
 
         checkReviewExist(reviewId);
-        if (userStorage.isUserNotExist(userId)) {
+        if (!userStorage.checkUserExist(userId)) {
             throw new NotExistException("User with id: " + userId + " does not exist");
         }
 

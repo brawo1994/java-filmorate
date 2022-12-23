@@ -164,17 +164,6 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public boolean isFilmNotExist(Integer filmId) {
-        final String SQL_QUERY = "SELECT ID\n" +
-                "FROM FILMS\n" +
-                "WHERE FILMS.ID = ?";
-        SqlRowSet userRows = jdbcTemplate.queryForRowSet(SQL_QUERY, filmId);
-
-        return !userRows.next();
-    }
-
-    private void addGenresToFilm(Film film){
-    @Override
     public List<Film> getFilmsByDirectorIdSortedByLike(int directorId) {
         return jdbcTemplate.query(
                 "SELECT f.* FROM films as f " +

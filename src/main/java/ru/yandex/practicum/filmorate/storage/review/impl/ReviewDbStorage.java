@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.review.impl;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -13,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReviewDbStorage implements ReviewStorage {
@@ -84,11 +82,7 @@ public class ReviewDbStorage implements ReviewStorage {
         params.put("CONTENT", review.getContent());
         params.put("IS_POSITIVE", review.getIsPositive());
 
-        int reviewId = simpleJdbcInsert.executeAndReturnKey(params).intValue();
-
-        log.info("review with id: {} created", reviewId);
-
-        return reviewId;
+        return simpleJdbcInsert.executeAndReturnKey(params).intValue();
     }
 
     @Override
