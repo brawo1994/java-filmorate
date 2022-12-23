@@ -29,9 +29,7 @@ public interface FilmStorage {
 
     List<Film> getFilmsByDirectorIdSortedByReleaseDate(int directorId);
 
-    List<Film> getPopular(Integer limit);
-
-    List<Film> getPopular(Integer limit, String groupBy);
+    List<Film> getPopular(Integer limit, String condition);
 
     boolean checkFilmExist(int filmId);
 }

@@ -83,20 +83,23 @@ public class FilmService {
     }
 
     public List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year) {
+        StringBuilder condition = new StringBuilder();
+
         if (genreId == null && year == null) {
-            return filmStorage.getPopular(limit);
+            return filmStorage.getPopular(limit, String.valueOf(condition));
 
         } else if (year == null) {
-            String groupBy = String.format("fg.genre_id = %d ", genreId);
-            return filmStorage.getPopular(limit, groupBy);
+            condition.append("WHERE fg.genre_id = ").append(genreId);
+            return filmStorage.getPopular(limit, String.valueOf(condition));
 
         } else if (genreId == null) {
-            String groupBy = String.format("YEAR(f.release_date) = %d ", year);
-            return filmStorage.getPopular(limit, groupBy);
+            condition.append("WHERE YEAR(f.release_date) = ").append(year);
+            return filmStorage.getPopular(limit, String.valueOf(condition));
 
         } else {
-            String groupBy = String.format("fg.genre_id = %d AND YEAR(f.release_date) = %d ", genreId, year);
-            return filmStorage.getPopular(limit, groupBy);
+            condition.append("WHERE fg.genre_id = ").append(genreId)
+                    .append("AND YEAR(f.release_date) = ").append(year);
+            return filmStorage.getPopular(limit, String.valueOf(condition));
         }
     }
 
