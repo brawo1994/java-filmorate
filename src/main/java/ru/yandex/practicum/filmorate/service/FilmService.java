@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.util.FilmValidate;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -83,11 +82,19 @@ public class FilmService {
         return filmStorage.removeLike(filmId, userId);
     }
 
-    public List<Film> getPopularFilms(int count) {
-        return filmStorage.getFilms().stream()
-                .sorted((o1, o2) -> Integer.compare(o2.getUsersLikes().size(), o1.getUsersLikes().size()))
-                .limit(count)
-                .collect(Collectors.toList());
+    public List<Film> getPopularFilms(Integer limit, Integer genreId, String year) {
+        if (genreId == null && year == null) {
+            return filmStorage.getPopular(limit);
+
+        } else if (year == null) {
+            return filmStorage.getPopular(limit,genreId);
+
+        } else if (genreId == null) {
+            return filmStorage.getPopular(limit,year);
+
+        } else {
+            return filmStorage.getPopular(limit, year, genreId);
+        }
     }
 
     public List<Film> getFilmsByDirector(int directorId, FilmsByDirectorOrderBy sortBy) {
@@ -107,7 +114,7 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(int userId, int friendId) {
-        return filmStorage.getCommonFilms(userId,friendId);
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 
 

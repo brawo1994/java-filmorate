@@ -67,6 +67,81 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> getPopular(Integer limit) {
+        String sqlQuery = "SELECT f.id, " +
+                                 "f.name, " +
+                                 "f.description, " +
+                                 "f.release_date, " +
+                                 "f.duration, " +
+                                 "f.rating_mpa " +
+                          "FROM films AS f " +
+                          "LEFT JOIN films_like AS fl ON f.id = fl.film_id " +
+                          "GROUP BY f.id, f.name, f.description, f.duration, f.rating_mpa " +
+                          "ORDER BY COUNT(fl.user_id) DESC " +
+                          "LIMIT ?";
+
+        return jdbcTemplate.query(sqlQuery, this::makeFilm, limit);
+    }
+
+    @Override
+    public List<Film> getPopular(Integer limit, Integer genreId) {
+        String sqlQuery = "SELECT f.id, " +
+                                 "f.name, " +
+                                 "f.description, " +
+                                 "f.release_date, " +
+                                 "f.duration, " +
+                                 "f.rating_mpa " +
+                                 "FROM films AS f " +
+                          "LEFT JOIN films_genre AS fg ON f.id = fg.film_id " +
+                          "LEFT JOIN films_like AS fl ON f.id = fl.film_id " +
+                          "WHERE fg.genre_id = ? " +
+                          "GROUP BY f.id, fg.genre_id " +
+                          "ORDER BY COUNT(fl.user_id) DESC " +
+                          "LIMIT ?";
+
+        return jdbcTemplate.query(sqlQuery, this::makeFilm, genreId, limit);
+    }
+
+    @Override
+    public List<Film> getPopular(Integer limit, String year) {
+        String sqlQuery = "SELECT f.id, " +
+                                 "f.name, " +
+                                 "f.description, " +
+                                 "f.release_date, " +
+                                 "f.duration, " +
+                                 "f.rating_mpa " +
+                           "FROM films AS f " +
+                           "LEFT JOIN films_genre AS fg ON f.id = fg.film_id " +
+                           "LEFT JOIN films_like AS fl ON f.id = fl.film_id " +
+                           "WHERE YEAR(f.release_date) = ? " +
+                           "GROUP BY f.id, f.release_date " +
+                           "ORDER BY COUNT(fl.user_id) DESC " +
+                           "LIMIT ?";
+
+        return jdbcTemplate.query(sqlQuery, this::makeFilm, year, limit);
+    }
+
+    @Override
+    public List<Film> getPopular(Integer limit, String year, Integer genreId) {
+        String sqlQuery = "SELECT f.id, " +
+                                 "f.name, " +
+                                 "f.description, " +
+                                 "f.release_date, " +
+                                 "f.duration, " +
+                                 "f.rating_mpa " +
+                          "FROM films AS f " +
+                          "LEFT JOIN films_genre AS fg ON f.id = fg.film_id " +
+                          "LEFT JOIN films_like AS fl ON f.id = fl.film_id " +
+                          "WHERE fg.genre_id = ? " +
+                            "AND YEAR(f.release_date) = ? " +
+                          "GROUP BY f.id, fg.genre_id " +
+                          "ORDER BY COUNT(fl.user_id) DESC " +
+                          "LIMIT ?";
+
+        return jdbcTemplate.query(sqlQuery, this::makeFilm, genreId, year, limit);
+    }
+
+    @Override
     public Film getFilmById(int filmId) {
         if (!checkFilmExist(filmId))
             throw new NotExistException("Film with id: " + filmId + " does not exist");
