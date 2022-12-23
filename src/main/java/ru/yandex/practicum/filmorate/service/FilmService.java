@@ -82,18 +82,21 @@ public class FilmService {
         return filmStorage.removeLike(filmId, userId);
     }
 
-    public List<Film> getPopularFilms(Integer limit, Integer genreId, String year) {
+    public List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year) {
         if (genreId == null && year == null) {
             return filmStorage.getPopular(limit);
 
         } else if (year == null) {
-            return filmStorage.getPopular(limit,genreId);
+            String groupBy = String.format("fg.genre_id = %d ", genreId);
+            return filmStorage.getPopular(limit, groupBy);
 
         } else if (genreId == null) {
-            return filmStorage.getPopular(limit,year);
+            String groupBy = String.format("YEAR(f.release_date) = %d ", year);
+            return filmStorage.getPopular(limit, groupBy);
 
         } else {
-            return filmStorage.getPopular(limit, year, genreId);
+            String groupBy = String.format("fg.genre_id = %d AND YEAR(f.release_date) = %d ", genreId, year);
+            return filmStorage.getPopular(limit, groupBy);
         }
     }
 

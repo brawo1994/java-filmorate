@@ -31,11 +31,7 @@ public interface FilmStorage {
 
     List<Film> getPopular(Integer limit);
 
-    List<Film> getPopular(Integer limit, Integer genreId);
-
-    List<Film> getPopular(Integer limit, String year);
-
-    List<Film> getPopular(Integer limit, String year, Integer genreId);
+    List<Film> getPopular(Integer limit, String groupBy);
 
     boolean checkFilmExist(int filmId);
 }

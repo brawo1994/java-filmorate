@@ -59,7 +59,7 @@ public class FilmController {
     public List<Film> getPopularFilms(
             @RequestParam(name = "count", defaultValue = "10", required = false) Integer limit,
             @RequestParam(required = false) Integer genreId,
-            @RequestParam(required = false) String year) {
+            @RequestParam(required = false) Integer year) {
         return filmService.getPopularFilms(limit, genreId, year);
     }
 
