@@ -31,16 +31,23 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getRecommendations(int id) {
-        return jdbcTemplate.query("SELECT DISTINCT F.ID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA FROM FILMS F " +
-                "JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID " +
-                "WHERE FL.USER_ID IN ( " +
-                "    SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS FROM FILMS_LIKE F " +
-                " JOIN FILMS_LIKE FL on F.FILM_ID = FL.FILM_ID " +
-                " JOIN FILMS_LIKE F2 on F2.FILM_ID = FL.FILM_ID " +
-                "  WHERE FL.USER_ID = ? " +
-                "    ) " +
-                "  AND F.ID NOT IN (" +
-                "      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?)", this::makeFilm, id, id);
+        return jdbcTemplate.query("SELECT DISTINCT F.ID," +
+                                                  "NAME, " +
+                                                  "DESCRIPTION," +
+                                                  "RELEASE_DATE," +
+                                                  "DURATION, " +
+                                                  "RATING_MPA " +
+                                      " FROM FILMS F " +
+                                      " JOIN FILMS_LIKE FL ON F.ID = FL.FILM_ID " +
+                                      "WHERE FL.USER_ID IN (" +
+                                            "SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS " +
+                                            "FROM FILMS_LIKE F " +
+                                            "JOIN FILMS_LIKE FL ON F.FILM_ID = FL.FILM_ID " +
+                                            "JOIN FILMS_LIKE F2 ON F2.FILM_ID = FL.FILM_ID " +
+                                            "WHERE FL.USER_ID = ?) " +
+                                      "  AND F.ID NOT IN (" +
+                                            "SELECT FILM_ID FROM FILMS_LIKE" +
+                                            "WHERE USER_ID = ?)", this::makeFilm, id, id);
     }
 
     @Override
@@ -53,17 +60,37 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
         String sqlQuery = "SELECT DISTINCT f.id, " +
+                                          "f.name, " +
+                                          "f.description, " +
+                                          "f.release_date, " +
+                                          "f.duration, " +
+                                          "f.rating_mpa " +
+                          "FROM films f " +
+                          "INNER JOIN films_like fl ON f.id = fl.film_id " +
+                          "INNER JOIN films_like f2 ON f2.film_id = fl.film_id " +
+                          "WHERE fl.user_id = ? AND f2.user_id = ?";
+
+        return jdbcTemplate.query(sqlQuery, this::makeFilm, userId, friendId);
+    }
+
+    @Override
+    public List<Film> getPopular(Integer limit, String condition) {
+        String sqlQuery = "SELECT f.id, " +
                 "f.name, " +
                 "f.description, " +
                 "f.release_date, " +
                 "f.duration, " +
                 "f.rating_mpa " +
-                "FROM films f " +
-                "INNER JOIN films_like fl ON f.id = fl.film_id " +
-                "INNER JOIN films_like f2 ON f2.film_id = fl.film_id " +
-                "WHERE fl.user_id = ? AND f2.user_id = ?";
+                "FROM films AS f " +
+                "LEFT JOIN films_genre AS fg ON f.id = fg.film_id " +
+                "LEFT JOIN films_like AS fl ON f.id = fl.film_id " +
+                 condition +
+                "GROUP BY f.id, f.name,f.description, f.release_date, f.duration, f.rating_mpa " +
+                "ORDER BY COUNT(fl.user_id) DESC " +
+                "LIMIT ?";
 
-        return jdbcTemplate.query(sqlQuery, this::makeFilm, userId, friendId);
+        return jdbcTemplate.query(sqlQuery, this::makeFilm, limit);
+
     }
 
     @Override

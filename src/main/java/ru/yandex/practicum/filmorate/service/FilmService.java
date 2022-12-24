@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.util.FilmValidate;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -83,11 +82,25 @@ public class FilmService {
         return filmStorage.removeLike(filmId, userId);
     }
 
-    public List<Film> getPopularFilms(int count) {
-        return filmStorage.getFilms().stream()
-                .sorted((o1, o2) -> Integer.compare(o2.getUsersLikes().size(), o1.getUsersLikes().size()))
-                .limit(count)
-                .collect(Collectors.toList());
+    public List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year) {
+        StringBuilder condition = new StringBuilder();
+
+        if (genreId == null && year == null) {
+            return filmStorage.getPopular(limit, String.valueOf(condition));
+
+        } else if (year == null) {
+            condition.append("WHERE fg.genre_id = ").append(genreId);
+            return filmStorage.getPopular(limit, String.valueOf(condition));
+
+        } else if (genreId == null) {
+            condition.append("WHERE YEAR(f.release_date) = ").append(year);
+            return filmStorage.getPopular(limit, String.valueOf(condition));
+
+        } else {
+            condition.append("WHERE fg.genre_id = ").append(genreId)
+                    .append("AND YEAR(f.release_date) = ").append(year);
+            return filmStorage.getPopular(limit, String.valueOf(condition));
+        }
     }
 
     public List<Film> getFilmsByDirector(int directorId, FilmsByDirectorOrderBy sortBy) {
@@ -107,7 +120,7 @@ public class FilmService {
     }
 
     public List<Film> getCommonFilms(int userId, int friendId) {
-        return filmStorage.getCommonFilms(userId,friendId);
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 
 
