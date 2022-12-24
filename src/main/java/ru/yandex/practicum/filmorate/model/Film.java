@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,10 +10,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,19 +28,10 @@ public class Film {
     @NotNull(message = "Продолжительность фильма должна быть указана")
     @PositiveOrZero(message = "Продолжительность фильма не может быть отрицательной")
     Long duration;
-    private List<Integer> usersLikes = new ArrayList<>();
+    private List<Integer> usersLikes;
     private Mpa mpa;
-    private List<Genre> genres= new LinkedList<>();//прилетал NULL в проверку жанров
-    private List<Director> directors = new ArrayList<>();
-
-    public Film(int id, String name, String description, LocalDate releaseDate, long duration, Mpa mpa) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.mpa = mpa;
-        }
+    private List<Genre> genres;
+    private List<Director> directors;
 
     public void addGenre(Genre genre) {
         genres.add(genre);

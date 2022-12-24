@@ -236,14 +236,17 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Film makeObjectFilm(ResultSet resultSet) throws SQLException {
-        final int id = resultSet.getInt("id");
-        final String name = resultSet.getString("name");
-        final String description = resultSet.getString("description");
-        final LocalDate releaseDate = resultSet.getDate("release_date").toLocalDate();
-        long duration = resultSet.getLong("duration");
-        int mpaId = resultSet.getInt("rating_mpa");
-        String mpaName = resultSet.getString("mpa_name");
-        return new Film(id, name, description, releaseDate, duration, new Mpa(mpaId, mpaName));
+        return Film.builder()
+                .id(resultSet.getInt("id"))
+                .name(resultSet.getString("name"))
+                .description(resultSet.getString("description"))
+                .releaseDate(resultSet.getTimestamp("release_date").toLocalDateTime().toLocalDate())
+                .duration(resultSet.getLong("duration"))
+                .mpa(new Mpa(resultSet.getInt("rating_mpa"), resultSet.getString("mpa_name")))
+                .usersLikes(new ArrayList<>())
+                .genres(new LinkedList<>())
+                .directors(new ArrayList<>())
+                .build();
     }
 
     private void loadFilmsLikes(List<Film> films) {
@@ -258,9 +261,8 @@ public class FilmDbStorage implements FilmStorage {
 
     private Film makeFilmListWithLikes(ResultSet rs, List<Film> films) throws SQLException {
         int filmId = rs.getInt("film_id");
-        int userId = rs.getInt("user_id");
         final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
-        filmMap.get(filmId).addLikes(userId);
+        filmMap.get(filmId).addLikes(rs.getInt("user_id"));
         return filmMap.get(filmId);
     }
 
@@ -278,10 +280,8 @@ public class FilmDbStorage implements FilmStorage {
 
     private Film makeFilmListWithDirectors(ResultSet rs, List<Film> films) throws SQLException {
         int id = rs.getInt("film_id");
-        int directorId = rs.getInt("id");
-        String name = rs.getString("name");
         final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
-        filmMap.get(id).addDirector(new Director(directorId, name));
+        filmMap.get(id).addDirector(new Director(rs.getInt("id"), rs.getString("name")));
         return filmMap.get(id);
     }
 
@@ -298,10 +298,8 @@ public class FilmDbStorage implements FilmStorage {
 
     private Film makeFilmListWithGenre(ResultSet rs, List<Film> films) throws SQLException {
         int filmId = rs.getInt("film_id");
-        int genreId = rs.getInt("id");
-        String name = rs.getString("name");
         final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
-        filmMap.get(filmId).addGenre(new Genre(genreId, name));
+        filmMap.get(filmId).addGenre(new Genre(rs.getInt("id"), rs.getString("name")));
         return filmMap.get(filmId);
     }
 
