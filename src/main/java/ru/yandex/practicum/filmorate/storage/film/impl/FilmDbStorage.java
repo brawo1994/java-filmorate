@@ -31,23 +31,16 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getRecommendations(int id) {
-        return jdbcTemplate.query("SELECT DISTINCT F.ID," +
-                "NAME, " +
-                "DESCRIPTION," +
-                "RELEASE_DATE," +
-                "DURATION, " +
-                "RATING_MPA " +
-                " FROM FILMS F " +
-                " JOIN FILMS_LIKE FL ON F.ID = FL.FILM_ID " +
-                "WHERE FL.USER_ID IN (" +
-                "SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS " +
-                "FROM FILMS_LIKE F " +
-                "JOIN FILMS_LIKE FL ON F.FILM_ID = FL.FILM_ID " +
-                "JOIN FILMS_LIKE F2 ON F2.FILM_ID = FL.FILM_ID " +
-                "WHERE FL.USER_ID = ?) " +
+        return jdbcTemplate.query("SELECT DISTINCT F.ID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA FROM FILMS F " +
+                "JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID " +
+                "WHERE FL.USER_ID IN ( " +
+                "    SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS FROM FILMS_LIKE F " +
+                " JOIN FILMS_LIKE FL on F.FILM_ID = FL.FILM_ID " +
+                " JOIN FILMS_LIKE F2 on F2.FILM_ID = FL.FILM_ID " +
+                "  WHERE FL.USER_ID = ? " +
+                "    ) " +
                 "  AND F.ID NOT IN (" +
-                "SELECT FILM_ID FROM FILMS_LIKE " +
-                "WHERE USER_ID = ?)", this::makeFilm, id, id);
+                "      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?)", this::makeFilm, id, id);
     }
 
     @Override
@@ -212,6 +205,104 @@ public class FilmDbStorage implements FilmStorage {
                         "ORDER BY f.release_date",
                 this::makeFilm,
                 directorId);
+    }
+
+    @Override
+    public List<Film> getRecommendations(int id) {
+        String sql = "SELECT DISTINCT F.ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA, M.NAME mpa_name FROM FILMS F" +
+                "                JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID" +
+                "                left join MPA M on M.ID = F.RATING_MPA " +
+                "           WHERE FL.USER_ID IN (" +
+                "                     SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS" +
+                "                     FROM FILMS_LIKE F" +
+                "                 JOIN FILMS_LIKE FL on F.FILM_ID = FL.FILM_ID" +
+                "                 JOIN FILMS_LIKE F2 on F2.FILM_ID = FL.FILM_ID" +
+                "                     WHERE FL.USER_ID = ?" +
+                "                    )" +
+                "                  AND F.ID NOT IN (" +
+                "                      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?" +
+                "                      )";
+        final List<Film> films =
+                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), id, id);
+        if (films.size() != 1) {
+            log.info("filmStorage getRecommendation not exist");
+            return films;
+        }
+        log.info("filmStorage getRecommendation(int userId)");
+        loadFilmsGenres(films);
+        loadFilmsDirectors(films);
+        loadFilmsLikes(films);
+        return films;
+    }
+
+    private Film makeObjectFilm(ResultSet resultSet) throws SQLException {
+        final int id = resultSet.getInt("id");
+        final String name = resultSet.getString("name");
+        final String description = resultSet.getString("description");
+        final LocalDate releaseDate = resultSet.getDate("release_date").toLocalDate();
+        long duration = resultSet.getLong("duration");
+        int mpaId = resultSet.getInt("rating_mpa");
+        String mpaName = resultSet.getString("mpa_name");
+        return new Film(id, name, description, releaseDate, duration, new Mpa(mpaId, mpaName));
+    }
+
+    private void loadFilmsLikes(List<Film> films) {
+        final List<Integer> ids = films.stream().map(Film::getId).collect(Collectors.toList());
+        String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
+        jdbcTemplate.query(
+                String.format("select FILM_ID, USER_ID from FILMS_LIKE " +
+                        "      where FILM_ID in (%s)", inSql),
+                ids.toArray(),
+                (rs, rowNum) -> makeFilmListWithLikes(rs, films));
+    }
+
+    private Film makeFilmListWithLikes(ResultSet rs, List<Film> films) throws SQLException {
+        int filmId = rs.getInt("film_id");
+        int userId = rs.getInt("user_id");
+        final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
+        filmMap.get(filmId).addLikes(userId);
+        return filmMap.get(filmId);
+    }
+
+
+    private void loadFilmsDirectors(List<Film> films) {
+        final List<Integer> ids = films.stream().map(Film::getId).collect(Collectors.toList());
+        String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
+        jdbcTemplate.query(
+                String.format("select FILM_ID, D.ID, D.NAME from DIRECTOR D " +
+                        "      join FILMS_DIRECTOR FD on D.ID = FD.DIRECTOR_ID " +
+                        "      where FILM_ID in (%s)", inSql),
+                ids.toArray(),
+                (rs, rowNum) -> makeFilmListWithDirectors(rs, films));
+    }
+
+    private Film makeFilmListWithDirectors(ResultSet rs, List<Film> films) throws SQLException {
+        int id = rs.getInt("film_id");
+        int directorId = rs.getInt("id");
+        String name = rs.getString("name");
+        final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
+        filmMap.get(id).addDirector(new Director(directorId, name));
+        return filmMap.get(id);
+    }
+
+    private void loadFilmsGenres(List<Film> films) {
+        final List<Integer> ids = films.stream().map(Film::getId).collect(Collectors.toList());
+        String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
+        jdbcTemplate.query(
+                String.format("select FILM_ID, G.ID, G.NAME from GENRE G " +
+                        "            left join FILMS_GENRE FG on G.ID = FG.GENRE_ID " +
+                        "             where FILM_ID in (%s)", inSql),
+                ids.toArray(),
+                (rs, rowNum) -> makeFilmListWithGenre(rs, films));
+    }
+
+    private Film makeFilmListWithGenre(ResultSet rs, List<Film> films) throws SQLException {
+        int filmId = rs.getInt("film_id");
+        int genreId = rs.getInt("id");
+        String name = rs.getString("name");
+        final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
+        filmMap.get(filmId).addGenre(new Genre(genreId, name));
+        return filmMap.get(filmId);
     }
 
     @Override
