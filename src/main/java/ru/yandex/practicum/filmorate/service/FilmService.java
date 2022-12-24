@@ -112,6 +112,7 @@ public class FilmService {
 
 
     public List<Film> getRecommendations(int id) {
+        if(id < 1){throw new ValidationException("Попробуйте еще раз, пользователя не существует");}
         return filmStorage.getRecommendations(id);
     }
 }
