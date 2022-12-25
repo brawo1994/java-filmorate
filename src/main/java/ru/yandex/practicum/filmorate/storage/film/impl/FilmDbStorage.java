@@ -46,7 +46,7 @@ public class FilmDbStorage implements FilmStorage {
                 "JOIN FILMS_LIKE F2 ON F2.FILM_ID = FL.FILM_ID " +
                 "WHERE FL.USER_ID = ?) " +
                 "  AND F.ID NOT IN (" +
-                "SELECT FILM_ID FROM FILMS_LIKE" +
+                "SELECT FILM_ID FROM FILMS_LIKE " +
                 "WHERE USER_ID = ?)", this::makeFilm, id, id);
     }
 
@@ -220,6 +220,47 @@ public class FilmDbStorage implements FilmStorage {
                 "SELECT * FROM films WHERE id = ?",
                 filmId);
         return userRows.next();
+    }
+
+    @Override
+    public List<Film> searchFilmsByTitle(String query) {
+        String likeValue = "%" + query.toLowerCase() + "%";
+        return jdbcTemplate.query(
+                "SELECT f.*, COUNT(l.film_id) FROM films as f " +
+                        "LEFT JOIN films_like as l on l.film_id = f.id " +
+                        "WHERE LOWER(f.name) like ? " +
+                        "GROUP BY f.id ORDER BY COUNT(l.film_id) DESC",
+                this::makeFilm,
+                likeValue);
+    }
+
+    @Override
+    public List<Film> searchFilmsByDirector(String query) {
+        String likeValue = "%" + query.toLowerCase() + "%";
+        return jdbcTemplate.query(
+                "SELECT DISTINCT f.*, COUNT(l.film_id) FROM films as f " +
+                        "LEFT JOIN films_director as fd ON fd.film_id = f.id " +
+                        "LEFT JOIN director as d ON d.id = fd.director_id " +
+                        "LEFT JOIN films_like as l on l.film_id = f.id " +
+                        "WHERE LOWER(d.name) like ? " +
+                        "GROUP BY f.id ORDER BY COUNT(l.film_id) DESC",
+                this::makeFilm,
+                likeValue);
+    }
+
+    @Override
+    public List<Film> searchFilmsByTitleAndDirector(String query) {
+        String likeValue = "%" + query.toLowerCase() + "%";
+        return jdbcTemplate.query(
+                "SELECT DISTINCT f.*, COUNT(l.film_id) FROM films as f " +
+                        "LEFT JOIN films_director as fd ON fd.film_id = f.id " +
+                        "LEFT JOIN director as d ON d.id = fd.director_id " +
+                        "LEFT JOIN films_like as l on l.film_id = f.id " +
+                        "WHERE LOWER(d.name) like ? OR LOWER(f.name) like ?" +
+                        "GROUP BY f.id ORDER BY COUNT(l.film_id) DESC",
+                this::makeFilm,
+                likeValue,
+                likeValue);
     }
 
     private void addGenresToFilm(Film film) {
