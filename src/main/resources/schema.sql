@@ -74,3 +74,12 @@ CREATE TABLE IF NOT EXISTS reviews_like (
     grade           INTEGER         NOT NULL,
     PRIMARY KEY (review_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS event_history (
+    event_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+    timestamp LONG NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    entity_id INTEGER NOT NULL,
+    operation VARCHAR(10) NOT NULL,
+    event_type VARCHAR(10) NOT NULL
+);
