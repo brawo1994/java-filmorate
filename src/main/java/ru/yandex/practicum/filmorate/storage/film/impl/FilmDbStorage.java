@@ -19,29 +19,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
-
-    @Override
-    public List<Film> getRecommendations(int id) {
-        return jdbcTemplate.query("SELECT DISTINCT F.ID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA FROM FILMS F " +
-                "JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID " +
-                "WHERE FL.USER_ID IN ( " +
-                "    SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS FROM FILMS_LIKE F " +
-                " JOIN FILMS_LIKE FL on F.FILM_ID = FL.FILM_ID " +
-                " JOIN FILMS_LIKE F2 on F2.FILM_ID = FL.FILM_ID " +
-                "  WHERE FL.USER_ID = ? " +
-                "    ) " +
-                "  AND F.ID NOT IN (" +
-                "      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?)", this::makeFilm, id, id);
-    }
 
     @Override
     public Collection<Film> getFilms() {
@@ -209,29 +194,32 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getRecommendations(int id) {
-        String sql = "SELECT DISTINCT F.ID, F.NAME, DESCRIPTION, RELEASE_DATE, DURATION, RATING_MPA, M.NAME mpa_name FROM FILMS F" +
-                "                JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID" +
-                "                left join MPA M on M.ID = F.RATING_MPA " +
-                "           WHERE FL.USER_ID IN (" +
+        String sql = "SELECT DISTINCT F.ID, F.NAME, DESCRIPTION," +
+                "                     RELEASE_DATE, DURATION, " +
+                "                     RATING_MPA, M.NAME MPA_NAME " + //уменьшаем количество обращений для получения mpa
+                " FROM FILMS F" +
+                "      JOIN FILMS_LIKE FL on F.ID = FL.FILM_ID " +
+                "      LEFT JOIN MPA M on M.ID = F.RATING_MPA " +
+                "           WHERE FL.USER_ID IN (" +//users с общими фильмами
                 "                     SELECT DISTINCT F2.USER_ID AS USER_COMMON_FILMS" +
-                "                     FROM FILMS_LIKE F" +
-                "                 JOIN FILMS_LIKE FL on F.FILM_ID = FL.FILM_ID" +
-                "                 JOIN FILMS_LIKE F2 on F2.FILM_ID = FL.FILM_ID" +
-                "                     WHERE FL.USER_ID = ?" +
-                "                    )" +
-                "                  AND F.ID NOT IN (" +
+                "                            FROM FILMS_LIKE F" +
+                "                                 JOIN FILMS_LIKE FL on F.FILM_ID = FL.FILM_ID" +
+                "                                 JOIN FILMS_LIKE F2 on F2.FILM_ID = FL.FILM_ID" +
+                "                               WHERE FL.USER_ID = ?" +
+                "                               )" +
+                "                  AND F.ID NOT IN (" +//фильмы, которых нет у юзера n
                 "                      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?" +
-                "                      )";
+                "                                   )";
         final List<Film> films =
                 jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), id, id);
-        if (films.size() != 1) {
+        if (films.size() < 1) { //Если рекомендованных фильмов нет, то не обращаемся за получением доп. информации
             log.info("filmStorage getRecommendation not exist");
             return films;
         }
-        log.info("filmStorage getRecommendation(int userId)");
-        loadFilmsGenres(films);
-        loadFilmsDirectors(films);
-        loadFilmsLikes(films);
+        log.info("filmStorage getRecommendation for user id = {}", id);
+        loadFilmsGenres(films);//получаем жанры для всего списка фильмов
+        loadFilmsDirectors(films);//получаем режиссеров для всего списка фильмов
+        loadFilmsLikes(films);//получаем оценки для всего списка фильмов
         return films;
     }
 
