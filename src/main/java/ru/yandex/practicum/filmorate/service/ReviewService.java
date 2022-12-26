@@ -118,15 +118,17 @@ public class ReviewService {
     public void deleteReview(int reviewId) {
         log.info("Start deleting review with id: {}", reviewId);
 
-        Review review = getReviewById(reviewId);
-        reviewStorage.deleteReview(reviewId);
-        eventHistoryStorage.save(EventHistory.builder()
-                .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
-                .userId(review.getUserId())
-                .eventType(EventType.REVIEW)
-                .operation(OperationType.REMOVE)
-                .entityId(review.getReviewId())
-                .build());
+        if (!reviewStorage.isReviewNotExist(reviewId)) {
+            Review review = getReviewById(reviewId);
+            reviewStorage.deleteReview(reviewId);
+            eventHistoryStorage.save(EventHistory.builder()
+                    .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
+                    .userId(review.getUserId())
+                    .eventType(EventType.REVIEW)
+                    .operation(OperationType.REMOVE)
+                    .entityId(review.getReviewId())
+                    .build());
+        }
 
         log.info("Finish deleting review with id: {}", reviewId);
     }

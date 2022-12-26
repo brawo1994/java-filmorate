@@ -58,7 +58,6 @@ public class UserService {
             throw new ValidationException("Users with id " + userId + " and " + friendId + " already friends");
         userStorage.addFriendship(userId, friendId);
         log.info("Users with id: {} and {} have become friends", userId, friendId);
-        log.info("Пользователи с id: {} и {} стали друзьями", userId, friendId);
         eventHistoryStorage.save(EventHistory.builder()
                 .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
                 .userId(userId)
@@ -76,7 +75,6 @@ public class UserService {
             throw new ValidationException("Users with id " + userId + " and " + friendId + " are not friends");
         userStorage.removeFriendship(userId, friendId);
         log.info("Users with id: {} and {} not friends anymore", userId, friendId);
-        log.info("Пользователи с id: {} и {} больше не друзья", userId, friendId);
         eventHistoryStorage.save(EventHistory.builder()
                 .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
                 .userId(userId)
