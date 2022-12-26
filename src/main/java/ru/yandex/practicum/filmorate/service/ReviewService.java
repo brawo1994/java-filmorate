@@ -4,11 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exeption.NotExistException;
+import ru.yandex.practicum.filmorate.model.EventHistory;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.OperationType;
+import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
 
@@ -20,6 +26,7 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final EventHistoryStorage eventHistoryStorage;
 
     public Collection<Review> getReviews(Map<String, Object> filters, int limit) {
         log.info("Start getting reviews");
@@ -59,6 +66,13 @@ public class ReviewService {
 
         int reviewId = reviewStorage.createReview(review);
         Review createdReview = reviewStorage.getReviewById(reviewId);
+        eventHistoryStorage.save(EventHistory.builder()
+                .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
+                .userId(userId)
+                .eventType(EventType.REVIEW)
+                .operation(OperationType.ADD)
+                .entityId(reviewId)
+                .build());
 
         log.info("Finish creating a review: {}", createdReview);
 
@@ -72,6 +86,13 @@ public class ReviewService {
 
         reviewStorage.updateReview(review);
         Review updatedReview = getReviewById(review.getReviewId());
+        eventHistoryStorage.save(EventHistory.builder()
+                .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
+                .userId(updatedReview.getUserId())
+                .eventType(EventType.REVIEW)
+                .operation(OperationType.UPDATE)
+                .entityId(updatedReview.getFilmId())
+                .build());
 
         log.info("Finish updating a review: {}", updatedReview);
 
@@ -97,7 +118,17 @@ public class ReviewService {
     public void deleteReview(int reviewId) {
         log.info("Start deleting review with id: {}", reviewId);
 
-        reviewStorage.deleteReview(reviewId);
+        if (!reviewStorage.isReviewNotExist(reviewId)) {
+            Review review = getReviewById(reviewId);
+            reviewStorage.deleteReview(reviewId);
+            eventHistoryStorage.save(EventHistory.builder()
+                    .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
+                    .userId(review.getUserId())
+                    .eventType(EventType.REVIEW)
+                    .operation(OperationType.REMOVE)
+                    .entityId(review.getReviewId())
+                    .build());
+        }
 
         log.info("Finish deleting review with id: {}", reviewId);
     }

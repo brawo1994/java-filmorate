@@ -6,12 +6,18 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.EventHistory;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
+import ru.yandex.practicum.filmorate.model.enums.OperationType;
+import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.util.FilmValidate;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,6 +30,8 @@ public class FilmService {
     private final DirectorService directorService;
     private final GenreService genreService;
     private final MpaService mpaService;
+    private final EventHistoryStorage eventHistoryStorage;
+
 
     public Collection<Film> getFilms() {
         return filmStorage.getFilms();
@@ -71,6 +79,13 @@ public class FilmService {
         userService.checkUserExist(List.of(userId));
         if (filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
             throw new ValidationException("Like from user with id: " + userId + " already exist in film with id: " + filmId);
+        eventHistoryStorage.save(EventHistory.builder()
+                .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
+                .userId(userId)
+                .eventType(EventType.LIKE)
+                .operation(OperationType.ADD)
+                .entityId(filmId)
+                .build());
         return filmStorage.addLike(filmId, userId);
     }
 
@@ -79,6 +94,13 @@ public class FilmService {
         userService.checkUserExist(List.of(userId));
         if (!filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
             throw new NotExistException("Like from user with id: " + userId + " not found in film with id: " + filmId);
+        eventHistoryStorage.save(EventHistory.builder()
+                .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
+                .userId(userId)
+                .eventType(EventType.LIKE)
+                .operation(OperationType.REMOVE)
+                .entityId(filmId)
+                .build());
         return filmStorage.removeLike(filmId, userId);
     }
 
