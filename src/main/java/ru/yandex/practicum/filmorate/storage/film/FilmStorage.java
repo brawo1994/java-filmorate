@@ -32,4 +32,10 @@ public interface FilmStorage {
     List<Film> getPopular(Integer limit, String condition);
 
     boolean checkFilmExist(int filmId);
+
+    List<Film> searchFilmsByTitle(String query);
+
+    List<Film> searchFilmsByDirector(String query);
+
+    List<Film> searchFilmsByTitleAndDirector(String query);
 }

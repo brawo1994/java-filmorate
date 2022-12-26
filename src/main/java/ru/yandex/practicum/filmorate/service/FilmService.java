@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
 import ru.yandex.practicum.filmorate.model.enums.OperationType;
 import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
+import ru.yandex.practicum.filmorate.model.enums.FilmsSearchBy;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.util.FilmValidate;
 
@@ -136,17 +137,39 @@ public class FilmService {
         }
     }
 
-    private void checkFilmExist(int filmId) {
-        if (!filmStorage.checkFilmExist(filmId))
-            throw new NotExistException("Film with id: " + filmId + " does not exist");
-    }
-
     public List<Film> getCommonFilms(int userId, int friendId) {
         return filmStorage.getCommonFilms(userId, friendId);
     }
 
-
     public List<Film> getRecommendations(int id) {
         return filmStorage.getRecommendations(id);
+    }
+
+    public List<Film> searchFilms(String query, String by) {
+        String[] byArray = by.split(",");
+        if (byArray.length > 2) {
+            throw new ValidationException("Incorrect value of parameter by");
+        }
+        if (byArray.length == 2) {
+            if (byArray[0].equals(byArray[1])) {
+                throw new ValidationException("Incorrect value of parameter by");
+            } else {
+                return filmStorage.searchFilmsByTitleAndDirector(query);
+            }
+        } else {
+            switch (FilmsSearchBy.valueOf(byArray[0].toUpperCase())) {
+                case TITLE:
+                    return filmStorage.searchFilmsByTitle(query);
+                case DIRECTOR:
+                    return filmStorage.searchFilmsByDirector(query);
+                default:
+                    throw new ValidationException("Incorrect value of parameter by");
+            }
+        }
+    }
+
+    private void checkFilmExist(int filmId) {
+        if (!filmStorage.checkFilmExist(filmId))
+            throw new NotExistException("Film with id: " + filmId + " does not exist");
     }
 }

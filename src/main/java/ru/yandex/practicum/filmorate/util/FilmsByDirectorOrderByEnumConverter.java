@@ -6,7 +6,7 @@ import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
 
 @Component
-public class MyEnumConverter implements Converter<String, FilmsByDirectorOrderBy> {
+public class FilmsByDirectorOrderByEnumConverter implements Converter<String, FilmsByDirectorOrderBy> {
 
     @Override
     public FilmsByDirectorOrderBy convert(String value) {
