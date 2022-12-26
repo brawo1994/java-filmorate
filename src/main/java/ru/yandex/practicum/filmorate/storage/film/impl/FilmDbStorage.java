@@ -252,7 +252,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film addLike(int filmId, int userId) {
         jdbcTemplate.update(
-                "INSERT INTO films_like (film_id, user_id) VALUES (?, ?)",
+                "merge INTO films_like (film_id, user_id) VALUES (?, ?)",
                 filmId,
                 userId);
         return getFilmById(filmId);
