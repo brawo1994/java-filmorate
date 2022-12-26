@@ -76,10 +76,6 @@ public class FilmService {
     }
 
     public Film addLike(int filmId, int userId) {
-        checkFilmExist(filmId);
-        userService.checkUserExist(List.of(userId));
-        if (filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
-            throw new ValidationException("Like from user with id: " + userId + " already exist in film with id: " + filmId);
         eventHistoryStorage.save(EventHistory.builder()
                 .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
                 .userId(userId)
@@ -142,6 +138,9 @@ public class FilmService {
     }
 
     public List<Film> getRecommendations(int id) {
+        if (id < 1) {
+            throw new ValidationException("Попробуйте еще раз, пользователя не существует");
+        }
         return filmStorage.getRecommendations(id);
     }
 
