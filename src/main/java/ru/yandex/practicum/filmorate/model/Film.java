@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.List;
 
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -30,4 +32,16 @@ public class Film {
     private Mpa mpa;
     private List<Genre> genres;
     private List<Director> directors;
+
+    public void addGenre(Genre genre) {
+        genres.add(genre);
+    }
+
+    public void addDirector(Director director) {
+    directors.add(director);
+    }
+
+    public void addLikes(Integer userId) {
+        usersLikes.add(userId);
+    }
 }
