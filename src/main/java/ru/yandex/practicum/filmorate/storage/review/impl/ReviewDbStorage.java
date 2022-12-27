@@ -19,7 +19,7 @@ public class ReviewDbStorage implements ReviewStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Collection<Review> getReviews(Map<String, Object> filters, int limit) {
+    public List<Review> getReviews(Map<String, Object> filters, int limit) {
         StringBuilder builderQuery = new StringBuilder("SELECT REVIEW.REVIEW_ID,\n" +
                 "    REVIEW.FILM_ID,\n" +
                 "    REVIEW.USER_ID,\n" +

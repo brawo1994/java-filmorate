@@ -2,12 +2,12 @@ package ru.yandex.practicum.filmorate.storage.review;
 
 import ru.yandex.practicum.filmorate.model.Review;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public interface ReviewStorage {
 
-    Collection<Review> getReviews(Map<String, Object> filters, int limit);
+    List<Review> getReviews(Map<String, Object> filters, int limit);
 
     Review getReviewById(int reviewId);
 

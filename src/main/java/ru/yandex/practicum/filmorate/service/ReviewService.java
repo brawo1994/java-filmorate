@@ -15,7 +15,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -28,10 +28,10 @@ public class ReviewService {
     private final UserStorage userStorage;
     private final EventHistoryStorage eventHistoryStorage;
 
-    public Collection<Review> getReviews(Map<String, Object> filters, int limit) {
+    public List<Review> getReviews(Map<String, Object> filters, int limit) {
         log.info("Start getting reviews");
 
-        Collection<Review> reviews = reviewStorage.getReviews(filters, limit);
+        List<Review> reviews = reviewStorage.getReviews(filters, limit);
 
         log.info("Finish getting reviews");
 
@@ -82,7 +82,7 @@ public class ReviewService {
     public Review updateReview(Review review) {
         log.info("Start updating a review: {}", review);
 
-        checkReviewExist(review.getReviewId());
+        throwIfReviewNotExist(review.getReviewId());
 
         reviewStorage.updateReview(review);
         Review updatedReview = getReviewById(review.getReviewId());
@@ -99,18 +99,34 @@ public class ReviewService {
         return updatedReview;
     }
 
-    public Review addReviewGrade(int reviewId, int userId, int grade) {
+    public Review addLike(int reviewId, int userId) {
         log.info("Start adding like from user with id: {} to review with id: {}", userId, reviewId);
 
-        checkReviewExist(reviewId);
+        throwIfReviewNotExist(reviewId);
         if (!userStorage.checkUserExist(userId)) {
             throw new NotExistException("User with id: " + userId + " does not exist");
         }
 
-        reviewStorage.addReviewGrade(reviewId, userId, grade);
+        reviewStorage.addReviewGrade(reviewId, userId, 1);
         Review review = getReviewById(reviewId);
 
         log.info("Finish adding like from user with id: {} to review with id: {}", userId, reviewId);
+
+        return review;
+    }
+
+    public Review addDislike(int reviewId, int userId) {
+        log.info("Start adding dislike from user with id: {} to review with id: {}", userId, reviewId);
+
+        throwIfReviewNotExist(reviewId);
+        if (!userStorage.checkUserExist(userId)) {
+            throw new NotExistException("User with id: " + userId + " does not exist");
+        }
+
+        reviewStorage.addReviewGrade(reviewId, userId, -1);
+        Review review = getReviewById(reviewId);
+
+        log.info("Finish adding dislike from user with id: {} to review with id: {}", userId, reviewId);
 
         return review;
     }
@@ -133,7 +149,7 @@ public class ReviewService {
         log.info("Finish deleting review with id: {}", reviewId);
     }
 
-    private void checkReviewExist(int reviewId) {
+    private void throwIfReviewNotExist(int reviewId) {
         if (reviewStorage.isReviewNotExist(reviewId)) {
             throw new NotExistException("Review with id: " + reviewId + " does not exist");
         }
