@@ -6,8 +6,8 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
 
 import javax.validation.Valid;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -18,8 +18,8 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @GetMapping
-    public Collection<Review> getReviews(@RequestParam(required = false) Integer filmId,
-                                         @RequestParam(defaultValue = "10") int count) {
+    public List<Review> getReviews(@RequestParam(required = false) Integer filmId,
+                                   @RequestParam(defaultValue = "10") int count) {
 
         Map<String, Object> filters = new HashMap<>();
         if (filmId != null) {
@@ -47,13 +47,13 @@ public class ReviewController {
     @PutMapping("/{reviewId}/like/{userId}")
     public Review addLike(@PathVariable int reviewId, @PathVariable int userId) {
         // Т.к. мы добавляем лайк, то оценка отзыва пользователем равна 1.
-        return reviewService.addReviewGrade(reviewId, userId, 1);
+        return reviewService.addLike(reviewId, userId);
     }
 
     @PutMapping("/{reviewId}/dislike/{userId}")
     public Review addDislike(@PathVariable int reviewId, @PathVariable int userId) {
         // Т.к. мы добавляем дизлайк, то оценка отзыва пользователем равна -1.
-        return reviewService.addReviewGrade(reviewId, userId, -1);
+        return reviewService.addDislike(reviewId, userId);
     }
 
     @DeleteMapping("/{reviewId}")
