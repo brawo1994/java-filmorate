@@ -7,7 +7,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 
@@ -32,8 +31,6 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     public Director getById(int id) {
-        if (!checkDirectorExist(id))
-            throw new NotExistException("Director with id: " + id + " does not exist");
         return jdbcTemplate.queryForObject(
                 "SELECT * FROM director WHERE id = ?",
                 this::makeDirector,

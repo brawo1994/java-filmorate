@@ -7,7 +7,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -34,8 +33,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User getUserById(int userId) {
-        if (!checkUserExist(userId))
-            throw new NotExistException("User with id: " + userId + " does not exist");
         return jdbcTemplate.queryForObject(
                 "SELECT * FROM users WHERE id = ?",
                 this::makeUser,

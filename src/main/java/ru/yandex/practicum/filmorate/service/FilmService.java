@@ -38,7 +38,7 @@ public class FilmService {
     }
 
     public Film getFilmById(int filmId) {
-        checkFilmExist(filmId);
+        throwIfFilmNotExist(filmId);
         return filmStorage.getFilmById(filmId);
     }
 
@@ -46,7 +46,7 @@ public class FilmService {
         FilmValidate.validate(film);
         if (film.getMpa() != null)
             // Проверяем, что Рейтинг с указанным id присутствует в БД
-            mpaService.checkMpaExist(film.getMpa().getId());
+            mpaService.throwIfMpaNotExist(film.getMpa().getId());
         if (film.getGenres() != null) {
             // Проверяем, что Жанры с указанными id присутствует в БД
             for (Genre genre : film.getGenres()) {
@@ -56,7 +56,7 @@ public class FilmService {
         if (film.getDirectors() != null) {
             // Проверяем, что Режиссеры с указанными id присутствует в БД
             for (Director director : film.getDirectors()) {
-                directorService.checkDirectorExist(director.getId());
+                directorService.throwIfDirectorNotExist(director.getId());
             }
         }
         return filmStorage.createFilm(film);
@@ -64,11 +64,13 @@ public class FilmService {
 
     public Film updateFilm(Film film) {
         FilmValidate.validate(film);
+        //Проверяем что редактируемый фильм существует в БД
+        throwIfFilmNotExist(film.getId());
         return filmStorage.updateFilm(film);
     }
 
     public Film deleteFilmById(int filmId) {
-        checkFilmExist(filmId);
+        throwIfFilmNotExist(filmId);
         return filmStorage.deleteFilmById(filmId);
     }
 
@@ -84,8 +86,8 @@ public class FilmService {
     }
 
     public Film deleteLike(int filmId, int userId) {
-        checkFilmExist(filmId);
-        userService.checkUserExist(List.of(userId));
+        throwIfFilmNotExist(filmId);
+        userService.throwIfUserNotExist(List.of(userId));
         if (!filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
             throw new NotExistException("Like from user with id: " + userId + " not found in film with id: " + filmId);
         eventHistoryStorage.save(EventHistory.builder()
@@ -121,7 +123,7 @@ public class FilmService {
 
     public List<Film> getFilmsByDirector(int directorId, FilmsByDirectorOrderBy sortBy) {
         // Проверяем что Режисер с указанным id существует
-        directorService.checkDirectorExist(directorId);
+        directorService.throwIfDirectorNotExist(directorId);
         if (sortBy.equals(FilmsByDirectorOrderBy.LIKES)) {
             // Возвращаем отсортированные по лайкам
             return filmStorage.findFilmsByDirectorIdSortedByLike(directorId);
@@ -164,7 +166,7 @@ public class FilmService {
         }
     }
 
-    private void checkFilmExist(int filmId) {
+    public void throwIfFilmNotExist(int filmId) {
         if (!filmStorage.checkFilmExist(filmId))
             throw new NotExistException("Film with id: " + filmId + " does not exist");
     }

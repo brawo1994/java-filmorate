@@ -18,7 +18,7 @@ public class DirectorService {
     }
 
     public Director getDirectorById(int id) {
-        checkDirectorExist(id);
+        throwIfDirectorNotExist(id);
         return directorStorage.getById(id);
     }
 
@@ -27,16 +27,16 @@ public class DirectorService {
     }
 
     public Director updateDirector(Director director) {
-        checkDirectorExist(director.getId());
+        throwIfDirectorNotExist(director.getId());
         return directorStorage.update(director);
     }
 
     public Director deleteDirectorById(int id) {
-        checkDirectorExist(id);
+        throwIfDirectorNotExist(id);
         return directorStorage.deleteById(id);
     }
 
-    public void checkDirectorExist(int id) {
+    public void throwIfDirectorNotExist(int id) {
         if (!directorStorage.checkDirectorExist(id))
             throw new NotExistException("Director with id: " + id + " does not exist");
     }

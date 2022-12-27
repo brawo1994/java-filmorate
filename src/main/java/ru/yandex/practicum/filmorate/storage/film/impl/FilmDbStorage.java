@@ -7,7 +7,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -189,8 +188,6 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film getFilmById(int filmId) {
-        if (!checkFilmExist(filmId))
-            throw new NotExistException("Film with id: " + filmId + " does not exist");
         return jdbcTemplate.queryForObject(
                 "SELECT * FROM films WHERE id = ?",
                 this::makeFilm,
@@ -273,7 +270,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film addLike(int filmId, int userId) {
         jdbcTemplate.update(
-                "merge INTO films_like (film_id, user_id) VALUES (?, ?)",
+                "MERGE INTO films_like (film_id, user_id) VALUES (?, ?)",
                 filmId,
                 userId);
         return getFilmById(filmId);

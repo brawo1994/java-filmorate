@@ -31,7 +31,7 @@ public class UserService {
     }
 
     public User getUserById(Integer userId) {
-        checkUserExist(List.of(userId));
+        throwIfUserNotExist(List.of(userId));
         return userStorage.getUserById(userId);
     }
 
@@ -42,18 +42,18 @@ public class UserService {
 
     public User updateUser(User user) {
         UserValidate.validate(user);
-        checkUserExist(List.of(user.getId()));
+        throwIfUserNotExist(List.of(user.getId()));
         return userStorage.updateUser(user);
     }
 
     public User deleteUserById(int userId) {
-        checkUserExist(List.of(userId));
+        throwIfUserNotExist(List.of(userId));
         return userStorage.deleteUserById(userId);
     }
 
     public User addFriend(int userId, int friendId) {
         checkUsersDifferent(userId, friendId);
-        checkUserExist(List.of(userId, friendId));
+        throwIfUserNotExist(List.of(userId, friendId));
         if (userStorage.getUserById(userId).getFriends().contains(friendId))
             throw new ValidationException("Users with id " + userId + " and " + friendId + " already friends");
         userStorage.addFriendship(userId, friendId);
@@ -70,7 +70,7 @@ public class UserService {
 
     public User deleteFriend(int userId, int friendId) {
         checkUsersDifferent(userId, friendId);
-        checkUserExist(List.of(userId, friendId));
+        throwIfUserNotExist(List.of(userId, friendId));
         if (!userStorage.getUserById(userId).getFriends().contains(friendId))
             throw new ValidationException("Users with id " + userId + " and " + friendId + " are not friends");
         userStorage.removeFriendship(userId, friendId);
@@ -86,14 +86,14 @@ public class UserService {
     }
 
     public List<User> getUserFriends(int userId) {
-        checkUserExist(List.of(userId));
+        throwIfUserNotExist(List.of(userId));
         return userStorage.getUserById(userId).getFriends().stream()
                 .map(userStorage::getUserById)
                 .collect(Collectors.toList());
     }
 
     public List<User> getCommonFriends(int firstUserId, int secondUserId) {
-        checkUserExist(List.of(firstUserId, secondUserId));
+        throwIfUserNotExist(List.of(firstUserId, secondUserId));
         checkUsersDifferent(firstUserId, secondUserId);
         return userStorage.getUserById(firstUserId).getFriends().stream()
                 .filter(friendId -> userStorage.getUserById(secondUserId).getFriends().contains(friendId))
@@ -101,16 +101,16 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public void checkUserExist(List<Integer> userIdList) {
+    public List<EventHistory> getEHistoryByUserId(int id) {
+        throwIfUserNotExist(List.of(id));
+        return eventHistoryStorage.findByUserId(id);
+    }
+
+    public void throwIfUserNotExist(List<Integer> userIdList) {
         for (Integer userId : userIdList) {
             if (!userStorage.checkUserExist(userId))
                 throw new NotExistException("User with id: " + userId + " does not exist");
         }
-    }
-
-    public List<EventHistory> getEHistoryByUserId(int id) {
-        getUserById(id);
-        return eventHistoryStorage.findByUserId(id);
     }
 
     private void checkUsersDifferent(int firstUserId, int secondUserId) {

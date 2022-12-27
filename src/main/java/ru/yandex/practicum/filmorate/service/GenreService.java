@@ -20,11 +20,11 @@ public class GenreService {
     }
 
     public Genre getById(int id) {
-        checkGenreExist(id);
+        throwIfGenreNotExist(id);
         return genreStorage.getById(id);
     }
 
-    public void checkGenreExist(int id) {
+    public void throwIfGenreNotExist(int id) {
         if (!genreStorage.checkGenreExist(id))
             throw new NotExistException("Genre with id: " + id + " does not exist");
     }

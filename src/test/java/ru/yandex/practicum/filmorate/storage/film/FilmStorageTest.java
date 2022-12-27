@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
@@ -14,7 +13,8 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -28,6 +28,9 @@ class FilmStorageTest {
 
     @BeforeEach
     void setup() {
+        for (Film film : filmStorage.getFilms()) {
+            filmStorage.deleteFilmById(film.getId());
+        }
         film = new Film();
         film.setName("Film Name");
         film.setDescription("Film Description");
@@ -68,7 +71,7 @@ class FilmStorageTest {
         filmStorage.createFilm(film);
         filmStorage.deleteFilmById(film.getId());
 
-        assertThrows(NotExistException.class, () -> filmStorage.getFilmById(film.getId()));
+        assertEquals(0, filmStorage.getFilms().size());
     }
 
     @Test

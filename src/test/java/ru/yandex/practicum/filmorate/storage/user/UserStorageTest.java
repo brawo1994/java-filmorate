@@ -1,13 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -24,6 +22,9 @@ class UserStorageTest {
 
     @BeforeEach
     void setup() {
+        for (User user : userStorage.getUsers()) {
+            userStorage.deleteUserById(user.getId());
+        }
         user1 = new User();
         user1.setEmail("test1@ya.ru");
         user1.setLogin("test1");
@@ -37,13 +38,6 @@ class UserStorageTest {
         user2.setName("Petya2");
         user2.setBirthday(LocalDate.of(2022, 1, 1));
         user2.setFriends(null);
-    }
-
-    @AfterEach
-    void clear() {
-        for (User user : userStorage.getUsers()) {
-            userStorage.deleteUserById(user.getId());
-        }
     }
 
     @Test
@@ -82,7 +76,7 @@ class UserStorageTest {
         userStorage.createUser(user1);
         userStorage.deleteUserById(user1.getId());
 
-        assertThrows(NotExistException.class, () -> userStorage.getUserById(user1.getId()));
+        assertEquals(0, userStorage.getUsers().size());
     }
 
     @Test

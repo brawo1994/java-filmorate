@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.OperationType;
 import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -24,8 +23,9 @@ import java.util.Map;
 public class ReviewService {
 
     private final ReviewStorage reviewStorage;
-    private final FilmStorage filmStorage;
+    private final FilmService filmService;
     private final UserStorage userStorage;
+    private final UserService userService;
     private final EventHistoryStorage eventHistoryStorage;
 
     public List<Review> getReviews(Map<String, Object> filters, int limit) {
@@ -41,9 +41,7 @@ public class ReviewService {
     public Review getReviewById(int id) {
         log.info("Start getting review by id: {}", id);
 
-        if (reviewStorage.isReviewNotExist(id)) {
-            throw new NotExistException("Review with id: " + id + " does not exist");
-        }
+        throwIfReviewNotExist(id);
 
         Review review = reviewStorage.getReviewById(id);
 
@@ -56,13 +54,10 @@ public class ReviewService {
         log.info("Start creating a review: {}", review);
 
         int filmId = review.getFilmId();
-        if (!filmStorage.checkFilmExist(filmId)) {
-            throw new NotExistException("Film with id: " + filmId + " does not exist");
-        }
+        filmService.throwIfFilmNotExist(filmId);
+
         int userId = review.getUserId();
-        if (!userStorage.checkUserExist(userId)) {
-            throw new NotExistException("User with id: " + userId + " does not exist");
-        }
+        userService.throwIfUserNotExist(List.of(userId));
 
         int reviewId = reviewStorage.createReview(review);
         Review createdReview = reviewStorage.getReviewById(reviewId);
@@ -83,6 +78,8 @@ public class ReviewService {
         log.info("Start updating a review: {}", review);
 
         throwIfReviewNotExist(review.getReviewId());
+        filmService.throwIfFilmNotExist(review.getFilmId());
+        userService.throwIfUserNotExist(List.of(review.getUserId()));
 
         reviewStorage.updateReview(review);
         Review updatedReview = getReviewById(review.getReviewId());
@@ -103,9 +100,7 @@ public class ReviewService {
         log.info("Start adding like from user with id: {} to review with id: {}", userId, reviewId);
 
         throwIfReviewNotExist(reviewId);
-        if (!userStorage.checkUserExist(userId)) {
-            throw new NotExistException("User with id: " + userId + " does not exist");
-        }
+        userService.throwIfUserNotExist(List.of(userId));
 
         reviewStorage.addReviewGrade(reviewId, userId, 1);
         Review review = getReviewById(reviewId);
@@ -119,9 +114,7 @@ public class ReviewService {
         log.info("Start adding dislike from user with id: {} to review with id: {}", userId, reviewId);
 
         throwIfReviewNotExist(reviewId);
-        if (!userStorage.checkUserExist(userId)) {
-            throw new NotExistException("User with id: " + userId + " does not exist");
-        }
+        userService.throwIfUserNotExist(List.of(userId));
 
         reviewStorage.addReviewGrade(reviewId, userId, -1);
         Review review = getReviewById(reviewId);
@@ -134,17 +127,16 @@ public class ReviewService {
     public void deleteReview(int reviewId) {
         log.info("Start deleting review with id: {}", reviewId);
 
-        if (!reviewStorage.isReviewNotExist(reviewId)) {
-            Review review = getReviewById(reviewId);
-            reviewStorage.deleteReview(reviewId);
-            eventHistoryStorage.save(EventHistory.builder()
-                    .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
-                    .userId(review.getUserId())
-                    .eventType(EventType.REVIEW)
-                    .operation(OperationType.REMOVE)
-                    .entityId(review.getReviewId())
-                    .build());
-        }
+        throwIfReviewNotExist(reviewId);
+        Review review = getReviewById(reviewId);
+        reviewStorage.deleteReview(reviewId);
+        eventHistoryStorage.save(EventHistory.builder()
+                .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
+                .userId(review.getUserId())
+                .eventType(EventType.REVIEW)
+                .operation(OperationType.REMOVE)
+                .entityId(review.getReviewId())
+                .build());
 
         log.info("Finish deleting review with id: {}", reviewId);
     }

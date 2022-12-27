@@ -18,11 +18,11 @@ public class MpaService {
     }
 
     public Mpa getById(int id) {
-        checkMpaExist(id);
+        throwIfMpaNotExist(id);
         return mpaStorage.getById(id);
     }
 
-    public void checkMpaExist(int id) {
+    public void throwIfMpaNotExist(int id) {
         if (!mpaStorage.checkMpaExist(id))
             throw new NotExistException("MPA with id: " + id + " does not exist");
     }
