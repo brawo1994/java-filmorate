@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import java.util.Collection;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -17,7 +16,7 @@ public class FilmController {
     private final FilmService filmService;
 
     @GetMapping
-    public Collection<Film> getFilms() {
+    public List<Film> getFilms() {
         return filmService.getFilms();
     }
 
