@@ -11,10 +11,12 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
-import ru.yandex.practicum.filmorate.model.enums.OperationType;
-import ru.yandex.practicum.filmorate.storage.eventHistory.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.model.enums.FilmsSearchBy;
+import ru.yandex.practicum.filmorate.model.enums.OperationType;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.eventHistory.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.util.FilmValidate;
 
 import java.sql.Timestamp;
@@ -26,6 +28,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final GenreStorage genreStorage;//получаем список фильмов с жанрами
+    private final DirectorStorage directorStorage;//получаем список фильмов с режиссерами
     private final UserService userService;
     private final DirectorService directorService;
     private final GenreService genreService;
@@ -34,7 +38,9 @@ public class FilmService {
 
 
     public List<Film> getFilms() {
-        return filmStorage.findFilms();
+        List<Film> films = filmStorage.findFilms();
+        loadInformationFilms(films);
+        return films;
     }
 
     public Film getFilmById(int filmId) {
@@ -104,49 +110,57 @@ public class FilmService {
 
     public List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year) {
         StringBuilder condition = new StringBuilder();
+        List<Film> films;
 
         if (genreId == null && year == null) {
-            return filmStorage.findPopular(limit, String.valueOf(condition));
-
+            films = filmStorage.findPopular(limit, String.valueOf(condition));
         } else if (year == null) {
             condition.append("WHERE fg.genre_id = ").append(genreId);
-            return filmStorage.findPopular(limit, String.valueOf(condition));
-
+            films = filmStorage.findPopular(limit, String.valueOf(condition));
         } else if (genreId == null) {
             condition.append("WHERE YEAR(f.release_date) = ").append(year);
-            return filmStorage.findPopular(limit, String.valueOf(condition));
-
+            films = filmStorage.findPopular(limit, String.valueOf(condition));
         } else {
             condition.append("WHERE fg.genre_id = ").append(genreId)
                     .append("AND YEAR(f.release_date) = ").append(year);
-            return filmStorage.findPopular(limit, String.valueOf(condition));
+            films = filmStorage.findPopular(limit, String.valueOf(condition));
         }
+        loadInformationFilms(films);
+        return films;
     }
 
     public List<Film> getFilmsByDirector(int directorId, FilmsByDirectorOrderBy sortBy) {
-        // Проверяем что Режисер с указанным id существует
+        // Проверяем что Режиссер с указанным id существует
         directorService.checkDirectorExist(directorId);
+        List<Film> films;
         if (sortBy.equals(FilmsByDirectorOrderBy.LIKES)) {
             // Возвращаем отсортированные по лайкам
-            return filmStorage.findFilmsByDirectorIdSortedByLike(directorId);
+            films = filmStorage.findFilmsByDirectorIdSortedByLike(directorId);
         } else {
-            return filmStorage.findFilmsByDirectorIdSortedByReleaseDate(directorId);
+            films = filmStorage.findFilmsByDirectorIdSortedByReleaseDate(directorId);
         }
+        loadInformationFilms(films);
+        return films;
     }
 
     public List<Film> getCommonFilms(int userId, int friendId) {
-        return filmStorage.findCommonFilms(userId, friendId);
+        List<Film> films = filmStorage.findCommonFilms(userId, friendId);
+        loadInformationFilms(films);
+        return films;
     }
 
     public List<Film> getRecommendations(int id) {
         if (id < 1) {
             throw new ValidationException("Попробуйте еще раз, пользователя не существует");
         }
-        return filmStorage.getRecommendations(id);
+        List<Film> films = filmStorage.getRecommendations(id);
+        loadInformationFilms(films);
+        return films;
     }
 
     public List<Film> searchFilms(String query, String by) {
         String[] byArray = by.split(",");
+        List<Film> films;
         if (byArray.length > 2) {
             throw new ValidationException("Incorrect value of parameter by");
         }
@@ -154,14 +168,20 @@ public class FilmService {
             if (byArray[0].equals(byArray[1])) {
                 throw new ValidationException("Incorrect value of parameter by");
             } else {
-                return filmStorage.searchFilmsByTitleAndDirector(query);
+                films = filmStorage.searchFilmsByTitleAndDirector(query);
+                loadInformationFilms(films);
+                return films;
             }
         } else {
             switch (FilmsSearchBy.valueOf(byArray[0].toUpperCase())) {
                 case TITLE:
-                    return filmStorage.searchFilmsByTitle(query);
+                    films = filmStorage.searchFilmsByTitle(query);
+                    loadInformationFilms(films);
+                    return films;
                 case DIRECTOR:
-                    return filmStorage.searchFilmsByDirector(query);
+                    films = filmStorage.searchFilmsByDirector(query);
+                    loadInformationFilms(films);
+                    return films;
                 default:
                     throw new ValidationException("Incorrect value of parameter by");
             }
@@ -171,5 +191,16 @@ public class FilmService {
     private void throwIfNotExist(int filmId) {
         if (!filmStorage.checkFilmExist(filmId))
             throw new NotExistException("Film with id: " + filmId + " does not exist");
+    }
+
+    private void loadInformationFilms(List<Film> films) {
+        if (films.size() < 1) { //Если фильмов нет, то не обращаемся за получением доп. информации
+            log.info("filmStorage getRecommendation not exist");
+            return;
+        }
+        log.info("filmStorage find all Films. films.size()  {}", films.size());
+        genreStorage.loadFilmsGenres(films);//получаем жанры для всего списка фильмов
+        directorStorage.loadFilmsDirectors(films);//получаем режиссеров для всего списка фильмов
+        filmStorage.loadFilmsLikes(films);//получаем оценки для всего списка фильмов
     }
 }

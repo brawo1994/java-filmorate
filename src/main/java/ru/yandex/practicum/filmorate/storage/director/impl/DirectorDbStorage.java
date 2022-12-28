@@ -9,13 +9,14 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -81,6 +82,26 @@ public class DirectorDbStorage implements DirectorStorage {
                 "SELECT * FROM director WHERE id = ?",
                 id);
         return genreRows.next();
+    }
+
+    @Override
+    public void loadFilmsDirectors(List<Film> films) {
+            final List<Integer> ids = films.stream().map(Film::getId).collect(Collectors.toList());
+            String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
+            jdbcTemplate.query(
+                    String.format("select FILM_ID, D.ID, D.NAME from DIRECTOR D " +
+                            "      join FILMS_DIRECTOR FD on D.ID = FD.DIRECTOR_ID " +
+                            "      where FILM_ID in (%s)", inSql),
+                    ids.toArray(),
+                    (rs, rowNum) -> makeFilmListWithDirectors(rs, films));
+    }
+
+        private Film makeFilmListWithDirectors(ResultSet rs, List<Film> films) throws SQLException {
+            int id = rs.getInt("film_id");
+            final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
+            filmMap.get(id).addDirector(new Director(rs.getInt("id"), rs.getString("name")));
+            return filmMap.get(id);
+
     }
 
     private Director makeDirector(ResultSet resultSet, int rowNum) throws SQLException {
