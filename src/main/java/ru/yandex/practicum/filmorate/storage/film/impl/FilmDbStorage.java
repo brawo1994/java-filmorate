@@ -72,10 +72,10 @@ public class FilmDbStorage implements FilmStorage {
                 String.format("select FILM_ID, USER_ID from FILMS_LIKE " +
                         "      where FILM_ID in (%s)", inSql),
                 ids.toArray(),
-                (rs, rowNum) -> makeFilmListWithLikes(rs, films));
+                (rs, rowNum) -> makeFilmsListWithLikes(rs, films));
     }
 
-    private Film makeFilmListWithLikes(ResultSet rs, List<Film> films) throws SQLException {
+    private Film makeFilmsListWithLikes(ResultSet rs, List<Film> films) throws SQLException {
         int filmId = rs.getInt("film_id");
         final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
         filmMap.get(filmId).addLikes(rs.getInt("user_id"));

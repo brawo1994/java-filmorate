@@ -11,11 +11,10 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
-import ru.yandex.practicum.filmorate.model.enums.OperationType;
-import ru.yandex.practicum.filmorate.storage.eventHistory.EventHistoryStorage;
-import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
-import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.model.enums.FilmsSearchBy;
+import ru.yandex.practicum.filmorate.model.enums.OperationType;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.eventHistory.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.util.FilmValidate;
@@ -131,7 +130,7 @@ public class FilmService {
     }
 
     public List<Film> getFilmsByDirector(int directorId, FilmsByDirectorOrderBy sortBy) {
-        // Проверяем что Режисер с указанным id существует
+        // Проверяем что Режиссер с указанным id существует
         directorService.checkDirectorExist(directorId);
         List<Film> films;
         if (sortBy.equals(FilmsByDirectorOrderBy.LIKES)) {
