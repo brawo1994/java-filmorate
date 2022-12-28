@@ -52,17 +52,17 @@ public class FilmService {
         FilmValidate.validate(film);
         if (film.getMpa() != null)
             // Проверяем, что Рейтинг с указанным id присутствует в БД
-            mpaService.checkMpaExist(film.getMpa().getId());
+            mpaService.throwIfMpaNotExist(film.getMpa().getId());
         if (film.getGenres() != null) {
             // Проверяем, что Жанры с указанными id присутствует в БД
             for (Genre genre : film.getGenres()) {
-                genreService.getById(genre.getId());
+                genreService.throwIfGenreNotExist(genre.getId());
             }
         }
         if (film.getDirectors() != null) {
             // Проверяем, что Режиссеры с указанными id присутствует в БД
             for (Director director : film.getDirectors()) {
-                directorService.checkDirectorExist(director.getId());
+                directorService.throwIfDirectorNotExist(director.getId());
             }
         }
         int newId = filmStorage.createFilm(film);
@@ -95,7 +95,7 @@ public class FilmService {
 
     public void deleteLike(int filmId, int userId) {
         throwIfNotExist(filmId);
-        userService.throwIfNotExist(List.of(userId));
+        userService.throwIfUserNotExist(List.of(userId));
         if (!filmStorage.getLikesByFilmId(filmId).contains(userId))
             throw new NotExistException("Like from user with id: " + userId + " not found in film with id: " + filmId);
         eventHistoryStorage.save(EventHistory.builder()
@@ -131,7 +131,7 @@ public class FilmService {
 
     public List<Film> getFilmsByDirector(int directorId, FilmsByDirectorOrderBy sortBy) {
         // Проверяем что Режиссер с указанным id существует
-        directorService.checkDirectorExist(directorId);
+        directorService.throwIfDirectorNotExist(directorId);
         List<Film> films;
         if (sortBy.equals(FilmsByDirectorOrderBy.LIKES)) {
             // Возвращаем отсортированные по лайкам
@@ -194,7 +194,7 @@ public class FilmService {
     }
 
     private void loadInformationFilms(List<Film> films) {
-        if (films.size() < 1) { //Если фильмов нет, то не обращаемся за получением доп. информации
+        if (films.isEmpty()) { //Если фильмов нет, то не обращаемся за получением доп. информации
             log.info("filmStorage getRecommendation not exist");
             return;
         }

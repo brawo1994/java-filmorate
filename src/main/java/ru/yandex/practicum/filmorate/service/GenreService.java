@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 
-import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -15,16 +15,16 @@ import java.util.Collection;
 public class GenreService {
     private final GenreStorage genreStorage;
 
-    public Collection<Genre> getAll() {
-        return genreStorage.getAll();
+    public List<Genre> getAll() {
+        return genreStorage.findAll();
     }
 
     public Genre getById(int id) {
-        checkGenreExist(id);
-        return genreStorage.getById(id);
+        return genreStorage.findById(id)
+                .orElseThrow(() -> new NotExistException("Genre with id: " + id + " does not exist"));
     }
 
-    public void checkGenreExist(int id) {
+    public void throwIfGenreNotExist(int id) {
         if (!genreStorage.checkGenreExist(id))
             throw new NotExistException("Genre with id: " + id + " does not exist");
     }

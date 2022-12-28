@@ -2,12 +2,12 @@ package ru.yandex.practicum.filmorate.storage.director.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
@@ -25,24 +25,24 @@ public class DirectorDbStorage implements DirectorStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Collection<Director> getAll() {
+    public List<Director> findAll() {
         return jdbcTemplate.query(
                 "SELECT * FROM director",
                 this::makeDirector);
     }
 
     @Override
-    public Director getById(int id) {
-        if (!checkDirectorExist(id))
-            throw new NotExistException("Director with id: " + id + " does not exist");
-        return jdbcTemplate.queryForObject(
-                "SELECT * FROM director WHERE id = ?",
-                this::makeDirector,
-                id);
+    public Optional<Director> findById(int id) {
+        String sqlQuery = "SELECT * FROM director WHERE id = ?";
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuery, this::makeDirector, id));
+        } catch (DataAccessException exception) {
+            return Optional.empty();
+        }
     }
 
     @Override
-    public Director create(Director director) {
+    public int create(Director director) {
         KeyHolder generatedId = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(
@@ -53,27 +53,24 @@ public class DirectorDbStorage implements DirectorStorage {
         }, generatedId);
         int createdDirectorId = Objects.requireNonNull(generatedId.getKey()).intValue();
         log.info("Director with id: {} created", createdDirectorId);
-        return getById(createdDirectorId);
+        return createdDirectorId;
     }
 
     @Override
-    public Director update(Director director) {
+    public void update(Director director) {
         jdbcTemplate.update(
                 "UPDATE director SET name = ? WHERE id = ?",
                 director.getName(),
                 director.getId());
         log.info("Director with id: {} edited", director.getId());
-        return director;
     }
 
     @Override
-    public Director deleteById(int id) {
-        Director director = getById(id);
+    public void deleteById(int id) {
         jdbcTemplate.update(
                 "DELETE FROM director WHERE id = ?",
                 id);
         log.info("Director with id: {} deleted", id);
-        return director;
     }
 
     @Override
@@ -96,12 +93,11 @@ public class DirectorDbStorage implements DirectorStorage {
                     (rs, rowNum) -> makeFilmListWithDirectors(rs, films));
     }
 
-        private Film makeFilmListWithDirectors(ResultSet rs, List<Film> films) throws SQLException {
-            int id = rs.getInt("film_id");
-            final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
-            filmMap.get(id).addDirector(new Director(rs.getInt("id"), rs.getString("name")));
-            return filmMap.get(id);
-
+    private Film makeFilmListWithDirectors(ResultSet rs, List<Film> films) throws SQLException {
+        int id = rs.getInt("film_id");
+        final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
+        filmMap.get(id).addDirector(new Director(rs.getInt("id"), rs.getString("name")));
+        return filmMap.get(id);
     }
 
     private Director makeDirector(ResultSet resultSet, int rowNum) throws SQLException {

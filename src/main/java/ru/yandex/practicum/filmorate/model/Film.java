@@ -21,18 +21,17 @@ public class Film {
 
     @NotBlank(message = "Наименование фильма должно быть указано")
     @Size(max = 50, message = "Наименование фильма не может быть длиннее 50 символов")
-
     private String name;
+
     @NotBlank
     @Size(max = 200, message = "Описание не может быть длиннее 200 символов")
-
     private String description;
-    @NotNull(message = "Дата релиза должна быть указана")
 
+    @NotNull(message = "Дата релиза должна быть указана")
     private LocalDate releaseDate;
+
     @NotNull(message = "Продолжительность фильма должна быть указана")
     @PositiveOrZero(message = "Продолжительность фильма не может быть отрицательной")
-
     private Long duration;
     private List<Integer> usersLikes;
     private Mpa mpa;

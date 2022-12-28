@@ -6,37 +6,38 @@ import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 
-import java.util.Collection;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class DirectorService {
     private final DirectorStorage directorStorage;
 
-    public Collection<Director> getDirectors() {
-        return directorStorage.getAll();
+    public List<Director> getDirectors() {
+        return directorStorage.findAll();
     }
 
     public Director getDirectorById(int id) {
-        checkDirectorExist(id);
-        return directorStorage.getById(id);
+        return directorStorage.findById(id)
+                .orElseThrow(() -> new NotExistException("Director with id: " + id + " does not exist"));
     }
 
     public Director createDirector(Director director) {
-        return directorStorage.create(director);
+        return getDirectorById(directorStorage.create(director));
     }
 
     public Director updateDirector(Director director) {
-        checkDirectorExist(director.getId());
-        return directorStorage.update(director);
+        throwIfDirectorNotExist(director.getId());
+        directorStorage.update(director);
+        return getDirectorById(director.getId());
     }
 
-    public Director deleteDirectorById(int id) {
-        checkDirectorExist(id);
-        return directorStorage.deleteById(id);
+    public void deleteDirectorById(int id) {
+        throwIfDirectorNotExist(id);
+        directorStorage.deleteById(id);
     }
 
-    public void checkDirectorExist(int id) {
+    public void throwIfDirectorNotExist(int id) {
         if (!directorStorage.checkDirectorExist(id))
             throw new NotExistException("Director with id: " + id + " does not exist");
     }
