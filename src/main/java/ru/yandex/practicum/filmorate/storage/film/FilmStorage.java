@@ -39,5 +39,7 @@ public interface FilmStorage {
 
     List<Film> searchFilmsByTitleAndDirector(String query);
 
+    void loadFilmsLikes(List<Film> films);
+
     List<Integer> getLikesByFilmId(int filmId);
 }

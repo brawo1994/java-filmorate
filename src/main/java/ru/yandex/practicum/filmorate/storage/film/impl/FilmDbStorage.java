@@ -47,10 +47,7 @@ public class FilmDbStorage implements FilmStorage {
                 "                  AND F.ID NOT IN (" +//фильмы, которых нет у юзера n
                 "                      SELECT FILM_ID FROM FILMS_LIKE WHERE USER_ID = ?" +
                 "                                   )";
-        final List<Film> films =
-                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), id, id);
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), id, id);
     }
 
     private Film makeObjectFilm(ResultSet resultSet) throws SQLException {
@@ -67,7 +64,8 @@ public class FilmDbStorage implements FilmStorage {
                 .build();
     }
 
-    private void loadFilmsLikes(List<Film> films) {
+    @Override
+    public void loadFilmsLikes(List<Film> films) {
         final List<Integer> ids = films.stream().map(Film::getId).collect(Collectors.toList());
         String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
         jdbcTemplate.query(
@@ -81,68 +79,19 @@ public class FilmDbStorage implements FilmStorage {
         int filmId = rs.getInt("film_id");
         final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
         filmMap.get(filmId).addLikes(rs.getInt("user_id"));
-        return filmMap.get(filmId);
-    }
 
-
-    private void loadFilmsDirectors(List<Film> films) {
-        final List<Integer> ids = films.stream().map(Film::getId).collect(Collectors.toList());
-        String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
-        jdbcTemplate.query(
-                String.format("select FILM_ID, D.ID, D.NAME from DIRECTOR D " +
-                        "      join FILMS_DIRECTOR FD on D.ID = FD.DIRECTOR_ID " +
-                        "      where FILM_ID in (%s)", inSql),
-                ids.toArray(),
-                (rs, rowNum) -> makeFilmListWithDirectors(rs, films));
-    }
-
-    private Film makeFilmListWithDirectors(ResultSet rs, List<Film> films) throws SQLException {
-        int id = rs.getInt("film_id");
-        final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
-        filmMap.get(id).addDirector(new Director(rs.getInt("id"), rs.getString("name")));
-        return filmMap.get(id);
-    }
-
-    private void loadFilmsGenres(List<Film> films) {
-        final List<Integer> ids = films.stream().map(Film::getId).collect(Collectors.toList());
-        String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
-        jdbcTemplate.query(
-                String.format("select FILM_ID, G.ID, G.NAME from GENRE G " +
-                        "            left join FILMS_GENRE FG on G.ID = FG.GENRE_ID " +
-                        "             where FILM_ID in (%s)", inSql),
-                ids.toArray(),
-                (rs, rowNum) -> makeFilmListWithGenre(rs, films));
-    }
-
-    private Film makeFilmListWithGenre(ResultSet rs, List<Film> films) throws SQLException {
-        int filmId = rs.getInt("film_id");
-        final Map<Integer, Film> filmMap = films.stream().collect(Collectors.toMap(Film::getId, film -> film));
-        filmMap.get(filmId).addGenre(new Genre(rs.getInt("id"), rs.getString("name")));
         return filmMap.get(filmId);
     }
 
     @Override
     public List<Film> findFilms() {
-        List<Film> films = jdbcTemplate.query(
+        return jdbcTemplate.query(
                 "SELECT  F.ID, F.NAME, DESCRIPTION, " +
                         "    RELEASE_DATE, DURATION, " +
                         "    RATING_MPA, M.NAME MPA_NAME  " + //уменьшаем количество обращений для получения mpa
                         "FROM FILMS F " +
                         "     LEFT JOIN MPA M on M.ID = F.RATING_MPA ",
                 (rs, rowNum) -> makeObjectFilm(rs));
-        loadInformationFilms(films);
-        return films;
-    }
-
-    private void loadInformationFilms(List<Film> films) {
-        if (films.size() < 1) { //Если фильмов нет, то не обращаемся за получением доп. информации
-            log.info("filmStorage getRecommendation not exist");
-            return;
-        }
-        log.info("filmStorage find all Films. films.size()  {}", films.size());
-        loadFilmsGenres(films);//получаем жанры для всего списка фильмов
-        loadFilmsDirectors(films);//получаем режиссеров для всего списка фильмов
-        loadFilmsLikes(films);//получаем оценки для всего списка фильмов
     }
 
     @Override
@@ -159,9 +108,7 @@ public class FilmDbStorage implements FilmStorage {
                 "INNER JOIN films_like f2 ON f2.film_id = fl.film_id " +
                 "WHERE fl.user_id = ? AND f2.user_id = ?";
 
-        List<Film> films = jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeObjectFilm(rs));
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sqlQuery, (rs, rowNum) -> makeObjectFilm(rs));
     }
 
     @Override
@@ -182,10 +129,7 @@ public class FilmDbStorage implements FilmStorage {
                 "ORDER BY COUNT(fl.user_id) DESC " +
                 "LIMIT ?";
 
-        final List<Film> films =
-                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), limit);
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), limit);
     }
 
     @Override
@@ -271,7 +215,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void addLike(int filmId, int userId) {
         jdbcTemplate.update(
-                "merge INTO films_like (film_id, user_id) VALUES (?, ?)",
+                "MERGE INTO films_like (film_id, user_id) VALUES (?, ?)",
                 filmId,
                 userId);
     }
@@ -297,10 +241,7 @@ public class FilmDbStorage implements FilmStorage {
                 "GROUP BY f.ID " +
                 "ORDER BY count(fl.USER_ID) DESC";
 
-        final List<Film> films =
-                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), directorId);
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), directorId);
     }
 
     @Override
@@ -312,10 +253,7 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE fd.director_id = ? " +
                 "ORDER BY f.release_date";
 
-        final List<Film> films =
-                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), directorId);
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), directorId);
     }
 
     @Override
@@ -338,10 +276,7 @@ public class FilmDbStorage implements FilmStorage {
                         "GROUP BY f.id " +
                         "ORDER BY COUNT(l.film_id) DESC";
 
-        final List<Film> films =
-                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), likeValue);
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), likeValue);
     }
 
     @Override
@@ -356,10 +291,7 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE LOWER(d.name) like ? " +
                 "GROUP BY f.id ORDER BY COUNT(l.film_id) DESC";
 
-        final List<Film> films =
-                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), likeValue);
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), likeValue);
     }
 
     @Override
@@ -375,10 +307,7 @@ public class FilmDbStorage implements FilmStorage {
                         "WHERE LOWER(d.name) like ? OR LOWER(f.name) like ?" +
                         "GROUP BY f.id ORDER BY COUNT(l.film_id) DESC";
 
-        final List<Film> films =
-                jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), likeValue, likeValue);
-        loadInformationFilms(films);
-        return films;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeObjectFilm(rs), likeValue, likeValue);
     }
 
     private void addGenresToFilm(Film film) {
