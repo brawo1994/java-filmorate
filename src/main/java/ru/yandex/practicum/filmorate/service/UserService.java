@@ -9,7 +9,7 @@ import ru.yandex.practicum.filmorate.model.EventHistory;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.OperationType;
-import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
+import ru.yandex.practicum.filmorate.storage.eventHistory.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import ru.yandex.practicum.filmorate.util.UserValidate;
 
@@ -35,13 +35,17 @@ public class UserService {
 
     public User createUser(User user) {
         UserValidate.validate(user);
-        return userStorage.createUser(user);
+        int newId = userStorage.createUser(user);
+        return userStorage.getUserById(newId)
+                .orElseThrow(() -> new NotExistException("User with id: " + newId + " does not exist"));
     }
 
     public User updateUser(User user) {
         UserValidate.validate(user);
         throwIfNotExist(List.of(user.getId()));
-        return userStorage.updateUser(user);
+        userStorage.updateUser(user);
+        return userStorage.getUserById(user.getId())
+                .orElseThrow(() -> new NotExistException("User with id: " + user.getId() + " does not exist"));
     }
 
     public void deleteUserById(int userId) {

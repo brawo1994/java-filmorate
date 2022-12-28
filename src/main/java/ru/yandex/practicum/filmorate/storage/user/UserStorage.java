@@ -11,9 +11,9 @@ public interface UserStorage {
 
     Optional<User> getUserById(int userId);
 
-    User createUser(User user);
+    int createUser(User user);
 
-    User updateUser(User user);
+    void updateUser(User user);
 
     void deleteById(int userId);
 

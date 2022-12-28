@@ -33,7 +33,7 @@ class FilmStorageTest {
         film.setDescription("Film Description");
         film.setDuration(100L);
         film.setReleaseDate(LocalDate.of(2022, 10, 30));
-        film.setMpa(new Mpa(1,"G"));
+        film.setMpa(new Mpa(1, "G"));
         film.setGenres(null);
 
         user = new User();
@@ -56,7 +56,8 @@ class FilmStorageTest {
         film.setName("Film Name_1");
         film.setDescription("Film Description_1");
         filmStorage.updateFilm(film);
-        Film newFilm = filmStorage.getFilmById(film.getId());
+        Film newFilm = filmStorage.getFilmById(film.getId())
+                .orElseThrow(() -> new NotExistException("Film with id: " + film.getId() + " does not exist"));
 
         assertEquals("Film Name_1", newFilm.getName());
         assertEquals("Film Description_1", newFilm.getDescription());
@@ -67,7 +68,8 @@ class FilmStorageTest {
         filmStorage.createFilm(film);
         filmStorage.deleteFilmById(film.getId());
 
-        assertThrows(NotExistException.class, () -> filmStorage.getFilmById(film.getId()));
+        assertThrows(NotExistException.class, () -> filmStorage.getFilmById(film.getId())
+                .orElseThrow(() -> new NotExistException("Film with id: " + film.getId() + " does not exist")));
     }
 
     @Test
@@ -75,11 +77,14 @@ class FilmStorageTest {
         filmStorage.createFilm(film);
         userStorage.createUser(user);
         filmStorage.addLike(film.getId(), user.getId());
-        Film newFilm = filmStorage.getFilmById(film.getId());
+        Film newFilm = filmStorage.getFilmById(film.getId())
+                .orElseThrow(() -> new NotExistException("Film with id: " + film.getId() + " does not exist"));
 
         assertEquals(user.getId(), newFilm.getUsersLikes().get(0));
 
-        newFilm = filmStorage.removeLike(film.getId(), user.getId());
+        filmStorage.removeLike(film.getId(), user.getId());
+        newFilm = filmStorage.getFilmById(film.getId())
+                .orElseThrow(() -> new NotExistException("Film with id: " + film.getId() + " does not exist"));
 
         assertTrue(newFilm.getUsersLikes().isEmpty());
 

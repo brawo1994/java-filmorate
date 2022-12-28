@@ -45,7 +45,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User createUser(User user) {
+    public int createUser(User user) {
         KeyHolder generatedId = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             final PreparedStatement stmt = connection.prepareStatement(
@@ -59,11 +59,11 @@ public class UserDbStorage implements UserStorage {
         }, generatedId);
         user.setId(Objects.requireNonNull(generatedId.getKey()).intValue());
         log.info("User with id: {} created", user.getId());
-        return user;
+        return user.getId();
     }
 
     @Override
-    public User updateUser(User user) {
+    public void updateUser(User user) {
         jdbcTemplate.update(
                 "UPDATE users SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ? ",
                 user.getEmail(),
@@ -72,7 +72,6 @@ public class UserDbStorage implements UserStorage {
                 user.getBirthday(),
                 user.getId());
         log.info("User with id: {} edited", user.getId());
-        return user;
     }
 
     @Override
