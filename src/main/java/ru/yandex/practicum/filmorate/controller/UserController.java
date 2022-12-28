@@ -2,14 +2,13 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.EventHistory;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import java.util.Collection;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -20,7 +19,7 @@ public class UserController {
     private final FilmService filmService;
 
     @GetMapping
-    public Collection<User> getUsers() {
+    public List<User> getUsers() {
         return userService.getUsers();
     }
 
@@ -55,12 +54,12 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public Collection<User> getUserFriends(@PathVariable int id) {
+    public List<User> getUserFriends(@PathVariable int id) {
         return userService.getUserFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
+    public List<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
         return userService.getCommonFriends(id,otherId);
     }
 
@@ -71,7 +70,7 @@ public class UserController {
 
 
    @GetMapping("/{id}/feed")
-    public Collection<EventHistory> getEHistoryByUserId(@PathVariable int id) {
+    public List<EventHistory> getEHistoryByUserId(@PathVariable int id) {
         return userService.getEHistoryByUserId(id);
    }
 }

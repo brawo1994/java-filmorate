@@ -11,9 +11,14 @@ import ru.yandex.practicum.filmorate.model.enums.OperationType;
 @Setter
 public class EventHistory {
     private int eventId;
+
     private long timestamp;
+
     private int userId;
+
     private int entityId;
+
     private OperationType operation;
+
     private EventType eventType;
 }

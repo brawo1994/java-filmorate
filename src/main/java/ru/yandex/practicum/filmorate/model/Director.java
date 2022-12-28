@@ -9,8 +9,9 @@ import javax.validation.constraints.Size;
 @Data
 @AllArgsConstructor
 public class Director {
-    int id;
+    private int id;
+
     @NotBlank(message = "Имя режиссера должно быть указано")
     @Size(max = 50, message = "Имя режиссера не может быть длиннее 50 символов")
-    String name;
+    private String name;
 }
