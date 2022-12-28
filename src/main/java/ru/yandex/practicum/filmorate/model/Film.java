@@ -17,18 +17,23 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Film {
-    int id;
+    private int id;
+
     @NotBlank(message = "Наименование фильма должно быть указано")
     @Size(max = 50, message = "Наименование фильма не может быть длиннее 50 символов")
-    String name;
+
+    private String name;
     @NotBlank
     @Size(max = 200, message = "Описание не может быть длиннее 200 символов")
-    String description;
+
+    private String description;
     @NotNull(message = "Дата релиза должна быть указана")
-    LocalDate releaseDate;
+
+    private LocalDate releaseDate;
     @NotNull(message = "Продолжительность фильма должна быть указана")
     @PositiveOrZero(message = "Продолжительность фильма не может быть отрицательной")
-    Long duration;
+
+    private Long duration;
     private List<Integer> usersLikes;
     private Mpa mpa;
     private List<Genre> genres;
@@ -39,7 +44,7 @@ public class Film {
     }
 
     public void addDirector(Director director) {
-    directors.add(director);
+        directors.add(director);
     }
 
     public void addLikes(Integer userId) {

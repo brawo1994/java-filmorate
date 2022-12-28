@@ -8,7 +8,7 @@ import ru.yandex.practicum.filmorate.model.EventHistory;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.OperationType;
-import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
+import ru.yandex.practicum.filmorate.storage.eventHistory.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;

@@ -12,7 +12,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.FilmsByDirectorOrderBy;
 import ru.yandex.practicum.filmorate.model.enums.OperationType;
-import ru.yandex.practicum.filmorate.storage.event_history.EventHistoryStorage;
+import ru.yandex.practicum.filmorate.storage.eventHistory.EventHistoryStorage;
 import ru.yandex.practicum.filmorate.model.enums.FilmsSearchBy;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.util.FilmValidate;
@@ -38,8 +38,8 @@ public class FilmService {
     }
 
     public Film getFilmById(int filmId) {
-        checkFilmExist(filmId);
-        return filmStorage.getFilmById(filmId);
+        return filmStorage.getFilmById(filmId)
+                .orElseThrow(() -> new NotExistException("Film with id: " + filmId + " does not exist"));
     }
 
     public Film createFilm(Film film) {
@@ -59,20 +59,24 @@ public class FilmService {
                 directorService.checkDirectorExist(director.getId());
             }
         }
-        return filmStorage.createFilm(film);
+        int newId = filmStorage.createFilm(film);
+        return filmStorage.getFilmById(newId)
+                .orElseThrow(() -> new NotExistException("Film with id: " + newId + " does not exist"));
     }
 
     public Film updateFilm(Film film) {
         FilmValidate.validate(film);
-        return filmStorage.updateFilm(film);
+        filmStorage.updateFilm(film);
+        return filmStorage.getFilmById(film.getId())
+                .orElseThrow(() -> new NotExistException("Film with id: " + film.getId() + " does not exist"));
     }
 
-    public Film deleteFilmById(int filmId) {
-        checkFilmExist(filmId);
-        return filmStorage.deleteFilmById(filmId);
+    public void deleteFilmById(int filmId) {
+        throwIfNotExist(filmId);
+        filmStorage.deleteFilmById(filmId);
     }
 
-    public Film addLike(int filmId, int userId) {
+    public void addLike(int filmId, int userId) {
         eventHistoryStorage.save(EventHistory.builder()
                 .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
                 .userId(userId)
@@ -80,13 +84,13 @@ public class FilmService {
                 .operation(OperationType.ADD)
                 .entityId(filmId)
                 .build());
-        return filmStorage.addLike(filmId, userId);
+        filmStorage.addLike(filmId, userId);
     }
 
-    public Film deleteLike(int filmId, int userId) {
-        checkFilmExist(filmId);
+    public void deleteLike(int filmId, int userId) {
+        throwIfNotExist(filmId);
         userService.throwIfNotExist(List.of(userId));
-        if (!filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
+        if (!filmStorage.getLikesByFilmId(filmId).contains(userId))
             throw new NotExistException("Like from user with id: " + userId + " not found in film with id: " + filmId);
         eventHistoryStorage.save(EventHistory.builder()
                 .timestamp(Timestamp.valueOf(LocalDateTime.now()).getTime())
@@ -95,7 +99,7 @@ public class FilmService {
                 .operation(OperationType.REMOVE)
                 .entityId(filmId)
                 .build());
-        return filmStorage.removeLike(filmId, userId);
+        filmStorage.removeLike(filmId, userId);
     }
 
     public List<Film> getPopularFilms(Integer limit, Integer genreId, Integer year) {
@@ -164,7 +168,7 @@ public class FilmService {
         }
     }
 
-    private void checkFilmExist(int filmId) {
+    private void throwIfNotExist(int filmId) {
         if (!filmStorage.checkFilmExist(filmId))
             throw new NotExistException("Film with id: " + filmId + " does not exist");
     }

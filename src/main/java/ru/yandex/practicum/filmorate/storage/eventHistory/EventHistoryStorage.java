@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.event_history;
+package ru.yandex.practicum.filmorate.storage.eventHistory;
 
 import ru.yandex.practicum.filmorate.model.EventHistory;
 
