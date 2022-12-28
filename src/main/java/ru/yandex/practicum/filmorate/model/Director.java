@@ -11,6 +11,6 @@ import javax.validation.constraints.Size;
 public class Director {
     int id;
     @NotBlank(message = "Имя режиссера должно быть указано")
-    @Size(max = 255, message = "Имя режиссера не может быть длиннее 255 символов")
+    @Size(max = 50, message = "Имя режиссера не может быть длиннее 50 символов")
     String name;
 }

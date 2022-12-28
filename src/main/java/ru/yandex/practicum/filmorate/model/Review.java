@@ -5,6 +5,7 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Data
 @AllArgsConstructor
@@ -18,6 +19,7 @@ public class Review {
     private Integer userId;
 
     @NotBlank(message = "Содержание отзыва не может быть пустым")
+    @Size(max = 255, message = "Отзыв не может быть длиннее 255 символов")
     private String content;
 
     @NotNull(message = "Тип отзыва не может отсутствовать")

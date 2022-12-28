@@ -19,6 +19,7 @@ import java.util.List;
 public class Film {
     int id;
     @NotBlank(message = "Наименование фильма должно быть указано")
+    @Size(max = 50, message = "Наименование фильма не может быть длиннее 50 символов")
     String name;
     @NotBlank
     @Size(max = 200, message = "Описание не может быть длиннее 200 символов")
