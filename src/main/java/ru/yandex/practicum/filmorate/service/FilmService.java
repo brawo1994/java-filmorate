@@ -85,7 +85,7 @@ public class FilmService {
 
     public Film deleteLike(int filmId, int userId) {
         checkFilmExist(filmId);
-        userService.checkUserExist(List.of(userId));
+        userService.throwIfNotExist(List.of(userId));
         if (!filmStorage.getFilmById(filmId).getUsersLikes().contains(userId))
             throw new NotExistException("Like from user with id: " + userId + " not found in film with id: " + filmId);
         eventHistoryStorage.save(EventHistory.builder()

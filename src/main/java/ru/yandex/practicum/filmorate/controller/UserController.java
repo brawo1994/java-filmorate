@@ -40,8 +40,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public User deleteUserById(@PathVariable int id) {
-        return userService.deleteUserById(id);
+    public void deleteUserById(@PathVariable int id) {
+        userService.deleteUserById(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

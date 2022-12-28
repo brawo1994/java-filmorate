@@ -41,7 +41,6 @@ class FilmStorageTest {
         user.setLogin("test");
         user.setName("Petya");
         user.setBirthday(LocalDate.of(2022, 1, 1));
-        user.setFriends(null);
     }
 
     @Test

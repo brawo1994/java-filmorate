@@ -2,12 +2,12 @@ package ru.yandex.practicum.filmorate.storage.user.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -17,7 +17,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -26,20 +28,20 @@ public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    public Collection<User> getUsers() {
+    public List<User> getUsers() {
         return jdbcTemplate.query(
                 "SELECT * FROM users",
                 this::makeUser);
     }
 
     @Override
-    public User getUserById(int userId) {
-        if (!checkUserExist(userId))
-            throw new NotExistException("User with id: " + userId + " does not exist");
-        return jdbcTemplate.queryForObject(
-                "SELECT * FROM users WHERE id = ?",
-                this::makeUser,
-                userId);
+    public Optional<User> getUserById(int userId) {
+        String sqlQuery = "SELECT * FROM users WHERE id = ?";
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuery, this::makeUser, userId));
+        } catch (DataAccessException exception) {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -74,13 +76,11 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User deleteUserById(int userId) {
-        User user = getUserById(userId);
+    public void deleteById(int userId) {
         jdbcTemplate.update(
                 "DELETE FROM users WHERE id = ?",
                 userId);
         log.info("User with id: {} deleted", userId);
-        return user;
     }
 
     @Override
@@ -141,6 +141,22 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
+    public List<User> findFriends(int id) {
+        String sqlQuery = "SELECT U.ID, U.EMAIL, U.LOGIN, U.NAME, U.BIRTHDAY " +
+                "FROM friends F, users U WHERE F.USER_ID = ? AND U.ID = F.FRIEND_ID";
+
+        return jdbcTemplate.query(sqlQuery, this::makeUser, id);
+    }
+
+    @Override
+    public List<User> getMutualFriends(int id, int otherId) {
+        String sqlQuery = "SELECT U.ID, U.EMAIL, U.LOGIN, U.NAME, U.BIRTHDAY " +
+                "FROM friends AS F JOIN users AS U ON U.ID = F.FRIEND_ID WHERE F.USER_ID = ? AND F.FRIEND_ID " +
+                "IN (SELECT FRIEND_ID FROM friends WHERE USER_ID = ?)";
+        return jdbcTemplate.query(sqlQuery, this::makeUser, id, otherId);
+    }
+
+    @Override
     public boolean checkUserExist(int userId) {
         SqlRowSet userRows = jdbcTemplate.queryForRowSet(
                 "SELECT * FROM users WHERE id = ?",
@@ -148,7 +164,7 @@ public class UserDbStorage implements UserStorage {
         return userRows.next();
     }
 
-    private List<Integer> getFriendsIdByUserId(int userId) {
+    public List<Integer> getFriendsIdByUserId(int userId) {
         return jdbcTemplate.queryForList(
                 "SELECT friend_id FROM friends WHERE user_id  = ?",
                 Integer.class,
@@ -161,7 +177,6 @@ public class UserDbStorage implements UserStorage {
         String login = resultSet.getString("login");
         String name = resultSet.getString("name");
         LocalDate birthday = resultSet.getDate("birthday").toLocalDate();
-        Set<Integer> friends = new HashSet<>(getFriendsIdByUserId(id));
-        return new User(id, email, login, name, birthday, friends);
+        return new User(id, email, login, name, birthday);
     }
 }
