@@ -238,7 +238,7 @@ public class FilmDbStorage implements FilmStorage {
         if (film.getDirectors() != null) {
             addDirectorsToFilm(film);
         }
-        int row = jdbcTemplate.update(
+        jdbcTemplate.update(
                 "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_mpa = ?" +
                         "WHERE id = ?",
                 film.getName(),
@@ -247,9 +247,6 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
-        if (row != 1) {
-            throw new NotExistException("Film with id: " + film.getId() + " does not exist");
-        }
         film.setMpa(getMpaById(film.getMpa().getId()));
         film.setGenres(getGenresByFilmId(film.getId()));
         film.setDirectors(getDirectorsByFilmId(film.getId()));
