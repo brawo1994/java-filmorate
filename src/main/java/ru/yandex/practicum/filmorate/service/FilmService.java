@@ -19,7 +19,6 @@ import ru.yandex.practicum.filmorate.util.FilmValidate;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 @Slf4j
@@ -34,8 +33,8 @@ public class FilmService {
     private final EventHistoryStorage eventHistoryStorage;
 
 
-    public Collection<Film> getFilms() {
-        return filmStorage.getFilms();
+    public List<Film> getFilms() {
+        return filmStorage.findFilms();
     }
 
     public Film getFilmById(int filmId) {
@@ -65,8 +64,6 @@ public class FilmService {
 
     public Film updateFilm(Film film) {
         FilmValidate.validate(film);
-        //Проверяем что редактируемый фильм существует в БД
-        checkFilmExist(film.getId());
         return filmStorage.updateFilm(film);
     }
 
@@ -105,20 +102,20 @@ public class FilmService {
         StringBuilder condition = new StringBuilder();
 
         if (genreId == null && year == null) {
-            return filmStorage.getPopular(limit, String.valueOf(condition));
+            return filmStorage.findPopular(limit, String.valueOf(condition));
 
         } else if (year == null) {
             condition.append("WHERE fg.genre_id = ").append(genreId);
-            return filmStorage.getPopular(limit, String.valueOf(condition));
+            return filmStorage.findPopular(limit, String.valueOf(condition));
 
         } else if (genreId == null) {
             condition.append("WHERE YEAR(f.release_date) = ").append(year);
-            return filmStorage.getPopular(limit, String.valueOf(condition));
+            return filmStorage.findPopular(limit, String.valueOf(condition));
 
         } else {
             condition.append("WHERE fg.genre_id = ").append(genreId)
                     .append("AND YEAR(f.release_date) = ").append(year);
-            return filmStorage.getPopular(limit, String.valueOf(condition));
+            return filmStorage.findPopular(limit, String.valueOf(condition));
         }
     }
 
@@ -127,14 +124,14 @@ public class FilmService {
         directorService.checkDirectorExist(directorId);
         if (sortBy.equals(FilmsByDirectorOrderBy.LIKES)) {
             // Возвращаем отсортированные по лайкам
-            return filmStorage.getFilmsByDirectorIdSortedByLike(directorId);
+            return filmStorage.findFilmsByDirectorIdSortedByLike(directorId);
         } else {
-            return filmStorage.getFilmsByDirectorIdSortedByReleaseDate(directorId);
+            return filmStorage.findFilmsByDirectorIdSortedByReleaseDate(directorId);
         }
     }
 
     public List<Film> getCommonFilms(int userId, int friendId) {
-        return filmStorage.getCommonFilms(userId, friendId);
+        return filmStorage.findCommonFilms(userId, friendId);
     }
 
     public List<Film> getRecommendations(int id) {
