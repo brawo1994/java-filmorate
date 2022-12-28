@@ -15,9 +15,7 @@ import ru.yandex.practicum.filmorate.util.UserValidate;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,13 +24,13 @@ public class UserService {
     private final UserStorage userStorage;
     private final EventHistoryStorage eventHistoryStorage;
 
-    public Collection<User> getUsers() {
+    public List<User> getUsers() {
         return userStorage.getUsers();
     }
 
     public User getUserById(Integer userId) {
-        checkUserExist(List.of(userId));
-        return userStorage.getUserById(userId);
+        return userStorage.getUserById(userId)
+                .orElseThrow(() -> new NotExistException("User with id: " + userId + " does not exist"));
     }
 
     public User createUser(User user) {
@@ -42,19 +40,19 @@ public class UserService {
 
     public User updateUser(User user) {
         UserValidate.validate(user);
-        checkUserExist(List.of(user.getId()));
+        throwIfNotExist(List.of(user.getId()));
         return userStorage.updateUser(user);
     }
 
-    public User deleteUserById(int userId) {
-        checkUserExist(List.of(userId));
-        return userStorage.deleteUserById(userId);
+    public void deleteUserById(int userId) {
+        throwIfNotExist(List.of(userId));
+        userStorage.deleteById(userId);
     }
 
     public User addFriend(int userId, int friendId) {
         checkUsersDifferent(userId, friendId);
-        checkUserExist(List.of(userId, friendId));
-        if (userStorage.getUserById(userId).getFriends().contains(friendId))
+        throwIfNotExist(List.of(userId, friendId));
+        if (userStorage.getFriendsIdByUserId(userId).contains(friendId))
             throw new ValidationException("Users with id " + userId + " and " + friendId + " already friends");
         userStorage.addFriendship(userId, friendId);
         log.info("Users with id: {} and {} have become friends", userId, friendId);
@@ -65,13 +63,13 @@ public class UserService {
                 .operation(OperationType.ADD)
                 .entityId(friendId)
                 .build());
-        return userStorage.getUserById(userId);
+        return getUserById(userId);
     }
 
     public User deleteFriend(int userId, int friendId) {
         checkUsersDifferent(userId, friendId);
-        checkUserExist(List.of(userId, friendId));
-        if (!userStorage.getUserById(userId).getFriends().contains(friendId))
+        throwIfNotExist(List.of(userId, friendId));
+        if (!userStorage.getFriendsIdByUserId(userId).contains(friendId))
             throw new ValidationException("Users with id " + userId + " and " + friendId + " are not friends");
         userStorage.removeFriendship(userId, friendId);
         log.info("Users with id: {} and {} not friends anymore", userId, friendId);
@@ -82,26 +80,21 @@ public class UserService {
                 .operation(OperationType.REMOVE)
                 .entityId(friendId)
                 .build());
-        return userStorage.getUserById(userId);
+        return getUserById(userId);
     }
 
     public List<User> getUserFriends(int userId) {
-        checkUserExist(List.of(userId));
-        return userStorage.getUserById(userId).getFriends().stream()
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
+        throwIfNotExist(List.of(userId));
+        return userStorage.findFriends(userId);
     }
 
     public List<User> getCommonFriends(int firstUserId, int secondUserId) {
-        checkUserExist(List.of(firstUserId, secondUserId));
+        throwIfNotExist(List.of(firstUserId, secondUserId));
         checkUsersDifferent(firstUserId, secondUserId);
-        return userStorage.getUserById(firstUserId).getFriends().stream()
-                .filter(friendId -> userStorage.getUserById(secondUserId).getFriends().contains(friendId))
-                .map(userStorage::getUserById)
-                .collect(Collectors.toList());
+        return userStorage.getMutualFriends(firstUserId, secondUserId);
     }
 
-    public void checkUserExist(List<Integer> userIdList) {
+    public void throwIfNotExist(List<Integer> userIdList) {
         for (Integer userId : userIdList) {
             if (!userStorage.checkUserExist(userId))
                 throw new NotExistException("User with id: " + userId + " does not exist");
