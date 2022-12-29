@@ -6,10 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -20,7 +21,7 @@ class MpaStorageTest {
     private final MpaStorage mpaStorage;
     @Test
     void getAllMpa() {
-        Collection<Mpa> mpaRatings = mpaStorage.getAll();
+        List<Mpa> mpaRatings = mpaStorage.findAll();
         Assertions.assertThat(mpaRatings)
                 .isNotEmpty()
                 .extracting(Mpa::getName)
@@ -29,8 +30,9 @@ class MpaStorageTest {
 
     @Test
     void getMpaById() {
-        Mpa mpa = mpaStorage.getById(1);
-        assertEquals(1, mpa.getId());
-        assertEquals("G", mpa.getName());
+        Mpa newMpa = mpaStorage.findById(1)
+                .orElseThrow(() -> new NotExistException("Mpa does not exist"));
+        assertEquals(1, newMpa.getId());
+        assertEquals("G", newMpa.getName());
     }
 }

@@ -6,10 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.yandex.practicum.filmorate.exeption.NotExistException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -23,7 +24,7 @@ class GenreStorageTest {
 
     @Test
     void getAllGenres() {
-        Collection<Genre> genres = genreStorage.getAll();
+        List<Genre> genres = genreStorage.findAll();
         Assertions.assertThat(genres)
                 .isNotEmpty()
                 .extracting(Genre::getName)
@@ -32,8 +33,9 @@ class GenreStorageTest {
 
     @Test
     void getGenreById() {
-        Genre genre = genreStorage.getById(1);
-        assertEquals(1, genre.getId());
-        assertEquals("Комедия", genre.getName());
+        Genre newGenre = genreStorage.findById(1)
+                .orElseThrow(() -> new NotExistException("Mpa does not exist"));
+        assertEquals(1, newGenre.getId());
+        assertEquals("Комедия", newGenre.getName());
     }
 }
